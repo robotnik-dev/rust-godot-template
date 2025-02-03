@@ -1,6 +1,6 @@
 use godot::prelude::*;
 
-struct MyExtension;
+struct GodotRustExtension;
 
 #[gdextension]
-unsafe impl ExtensionLibrary for MyExtension {}
+unsafe impl ExtensionLibrary for GodotRustExtension {}
