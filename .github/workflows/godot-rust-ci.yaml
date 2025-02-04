@@ -1,15 +1,41 @@
 name: "godot-rust-ci export"
 on: push
 
-# NOTE: If your `project.godot` is at the repository root, set `PROJECT_PATH` below to ".".
+# NOTE: If your `project.godot` is at the repository root, set `GODOT_PROJECT_PATH` below to ".".
 
 env:
   GODOT_VERSION: 4.3
-  EXPORT_NAME: godot-project
-  PROJECT_PATH: godot
+  EXPORT_NAME: game
+  GODOT_PROJECT_PATH: godot
+  RUST_PROJECT_PATH: rust
 
 jobs:
+  build-rust:
+    name: Build rust
+    runs-on: ubuntu-20.04
+    container:
+      image: robotnikdev/godot-rust-ci:4.3
+      credentials:
+        username: robotnikdev
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: rust Build
+        run: |
+          mkdir -v -p build/rust
+          cd $RUST_PROJECT_PATH
+          cargo build --release
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-build
+          path: build/rust
+
   export-windows:
+    needs: build-rust
     name: Windows Export
     runs-on: ubuntu-20.04
     container:
@@ -22,6 +48,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rust-build
       - name: Setup
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
@@ -32,7 +62,7 @@ jobs:
         run: |
           mkdir -v -p build/windows
           EXPORT_DIR="$(readlink -f build)"
-          cd $PROJECT_PATH
+          cd $GODOT_PROJECT_PATH
           godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/$EXPORT_NAME.exe"
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -41,6 +71,7 @@ jobs:
           path: build/windows
 
   export-linux:
+    needs: build-rust
     name: Linux Export
     runs-on: ubuntu-20.04
     container:
@@ -53,6 +84,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rust-build
       - name: Setup
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
@@ -61,7 +96,7 @@ jobs:
         run: |
           mkdir -v -p build/linux
           EXPORT_DIR="$(readlink -f build)"
-          cd $PROJECT_PATH
+          cd $GODOT_PROJECT_PATH
           godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/$EXPORT_NAME.x86_64"
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -70,6 +105,7 @@ jobs:
           path: build/linux
 
   export-web:
+    needs: build-rust
     name: Web Export
     runs-on: ubuntu-20.04
     container:
@@ -82,6 +118,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rust-build
       - name: Setup
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
@@ -90,7 +130,7 @@ jobs:
         run: |
           mkdir -v -p build/web
           EXPORT_DIR="$(readlink -f build)"
-          cd $PROJECT_PATH
+          cd $GODOT_PROJECT_PATH
           godot --headless --verbose --export-release "Web" "$EXPORT_DIR/web/index.html"
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -107,6 +147,7 @@ jobs:
           folder: build/web # The folder the action should deploy.
 
   export-mac:
+    needs: build-rust
     name: Mac Export
     runs-on: ubuntu-20.04
     container:
@@ -119,6 +160,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rust-build
       - name: Setup
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
@@ -127,10 +172,45 @@ jobs:
         run: |
           mkdir -v -p build/mac
           EXPORT_DIR="$(readlink -f build)"
-          cd $PROJECT_PATH
+          cd $GODOT_PROJECT_PATH
           godot --headless --verbose --export-release "macOS" "$EXPORT_DIR/mac/$EXPORT_NAME.zip"
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: mac
           path: build/mac
+
+  # Android Debug Job. It will use the generated debug.keystore.
+  export-android-debug:
+    needs: build-rust
+    name: Android Debug Export
+    runs-on: ubuntu-20.04
+    container:
+      image: robotnikdev/godot-rust-ci:4.3
+      credentials:
+        username: robotnikdev
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rust-build
+      - name: Setup
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+      - name: Android Debug Build
+        run: |
+          mkdir -v -p build/android
+          EXPORT_DIR="$(readlink -f build)"
+          cd $GODOT_PROJECT_PATH
+          godot --headless --verbose --export-debug "Android Debug" "$EXPORT_DIR/android/$EXPORT_NAME-debug.apk"
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug
+          path: build/android
