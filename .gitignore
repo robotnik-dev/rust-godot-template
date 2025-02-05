@@ -18,6 +18,7 @@ Cargo.lock
 # Godot-specific ignores
 .import/
 export.cfg
+export/
 
 # Imported translations (automatically generated from CSV files)
 *.translation
