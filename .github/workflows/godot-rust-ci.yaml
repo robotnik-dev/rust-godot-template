@@ -220,7 +220,7 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
-          name: linux-build-rust-debug
+          name: windows-build-rust-debug
           path: rust/target/debug
       - name: Setup
         run: |
