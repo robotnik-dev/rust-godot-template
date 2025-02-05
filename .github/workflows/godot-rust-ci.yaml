@@ -8,50 +8,8 @@ env:
   RUST_PROJECT_PATH: rust
 
 jobs:
-  windows-build-rust-debug:
-    name: Windows Build Rust Debug
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Setup Rust
-        run: |
-          rustup target add x86_64-pc-windows-gnu
-          sudo apt install mingw-w64
-      - name: Build Rust
-        run: |
-          cd $RUST_PROJECT_PATH
-          cargo build --target x86_64-pc-windows-gnu
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-build-rust-debug
-          path: rust/target/x86_64-pc-windows-gnu/debug
-
-  # linux-build-rust-release:
-  #   name: Linux Build Rust Release
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         lfs: true
-  #     - name: Setup Rust
-  #       run: rustup default stable
-  #     - name: Build Rust
-  #       run: |
-  #         cd $RUST_PROJECT_PATH
-  #         cargo build --release
-  #     - name: Upload Artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: linux-build-rust-release
-  #         path: rust/target/release
-
-  # windows-build-rust:
-  #   name: Windows Build Rust
+  # windows-build-rust-debug:
+  #   name: Windows Build Rust Debug
   #   runs-on: ubuntu-22.04
   #   steps:
   #     - name: Checkout
@@ -65,12 +23,54 @@ jobs:
   #     - name: Build Rust
   #       run: |
   #         cd $RUST_PROJECT_PATH
-  #         cargo build --release --target x86_64-pc-windows-gnu
+  #         cargo build --target x86_64-pc-windows-gnu
   #     - name: Upload Artifact
   #       uses: actions/upload-artifact@v4
   #       with:
-  #         name: windows-build-rust
-  #         path: rust/target/x86_64-pc-windows-gnu/release
+  #         name: windows-build-rust-debug
+  #         path: rust/target/x86_64-pc-windows-gnu/debug
+
+  linux-build-rust:
+    name: Linux Build Rust
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Setup Rust
+        run: rustup default stable
+      - name: Build Rust
+        run: |
+          cd $RUST_PROJECT_PATH
+          cargo build --release
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build-rust
+          path: rust/target/release
+
+  windows-build-rust:
+    name: Windows Build Rust
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Setup Rust
+        run: |
+          rustup target add x86_64-pc-windows-gnu
+          sudo apt install mingw-w64
+      - name: Build Rust
+        run: |
+          cd $RUST_PROJECT_PATH
+          cargo build --release --target x86_64-pc-windows-gnu
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build-rust
+          path: rust/target/x86_64-pc-windows-gnu/release
 
   # mac-build-rust:
   #   name: Mac Build Rust
@@ -95,77 +95,77 @@ jobs:
   #         name: mac-build-rust
   #         path: rust/target/x86_64-apple-darwin/release
 
-  # export-linux:
-  #   needs: linux-build-rust-release
-  #   name: Linux Export
-  #   runs-on: ubuntu-22.04
-  #   container:
-  #     image: robotnikdev/godot-rust-ci:4.3
-  #     credentials:
-  #       username: robotnikdev
-  #       password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         lfs: true
-  #     - name: Download Artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: linux-build-rust-release
-  #         path: rust/target/release
-  #     - name: Setup
-  #       run: |
-  #         mkdir -v -p ~/.local/share/godot/export_templates/
-  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-  #     - name: Linux Build
-  #       run: |
-  #         mkdir -v -p build/linux
-  #         EXPORT_DIR="$(readlink -f build)"
-  #         cd $GODOT_PROJECT_PATH
-  #         godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/$EXPORT_GAME_NAME.x86_64"
-  #     - name: Upload Artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: linux
-  #         path: build/linux
+  export-linux:
+    needs: linux-build-rust
+    name: Linux Export
+    runs-on: ubuntu-22.04
+    container:
+      image: robotnikdev/godot-rust-ci:4.3
+      credentials:
+        username: robotnikdev
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-build-rust
+          path: rust/target/release
+      - name: Setup
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+      - name: Linux Build
+        run: |
+          mkdir -v -p build/linux
+          EXPORT_DIR="$(readlink -f build)"
+          cd $GODOT_PROJECT_PATH
+          godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/$EXPORT_GAME_NAME.x86_64"
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: build/linux
 
-  # export-windows:
-  #   needs: windows-build-rust
-  #   name: Windows Export
-  #   runs-on: ubuntu-22.04
-  #   container:
-  #     image: robotnikdev/godot-rust-ci:4.3
-  #     credentials:
-  #       username: robotnikdev
-  #       password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         lfs: true
-  #     - name: Download Artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: windows-build-rust
-  #         path: rust/target/release
-  #     - name: Setup
-  #       run: |
-  #         mkdir -v -p ~/.local/share/godot/export_templates/
-  #         mkdir -v -p ~/.config/
-  #         mv /root/.config/godot ~/.config/godot
-  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-  #     - name: Windows Build
-  #       run: |
-  #         mkdir -v -p build/windows
-  #         EXPORT_DIR="$(readlink -f build)"
-  #         cd $GODOT_PROJECT_PATH
-  #         godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/$EXPORT_GAME_NAME.exe"
-  #     - name: Upload Artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: windows
-  #         path: build/windows
+  export-windows:
+    needs: windows-build-rust
+    name: Windows Export
+    runs-on: ubuntu-22.04
+    container:
+      image: robotnikdev/godot-rust-ci:4.3
+      credentials:
+        username: robotnikdev
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-build-rust
+          path: rust/target/release
+      - name: Setup
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mkdir -v -p ~/.config/
+          mv /root/.config/godot ~/.config/godot
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+      - name: Windows Build
+        run: |
+          mkdir -v -p build/windows
+          EXPORT_DIR="$(readlink -f build)"
+          cd $GODOT_PROJECT_PATH
+          godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/$EXPORT_GAME_NAME.exe"
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: build/windows
 
   # export-mac:
   #   needs: mac-build-rust
@@ -202,38 +202,38 @@ jobs:
   #         name: mac
   #         path: build/mac
 
-  # Android Debug Job. It will use the generated debug.keystore.
-  export-android-debug:
-    needs: windows-build-rust-debug
-    name: Android Debug Export
-    runs-on: ubuntu-22.04
-    container:
-      image: robotnikdev/godot-rust-ci:4.3
-      credentials:
-        username: robotnikdev
-        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-build-rust-debug
-          path: rust/target/debug
-      - name: Setup
-        run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: Android Debug Build
-        run: |
-          mkdir -v -p build/android
-          EXPORT_DIR="$(readlink -f build)"
-          cd $GODOT_PROJECT_PATH
-          godot --headless --verbose --export-debug "Android Debug" "$EXPORT_DIR/android/$EXPORT_GAME_NAME-debug.apk"
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-debug
-          path: build/android
+  # # Android Debug Job. It will use the generated debug.keystore.
+  # export-android-debug:
+  #   needs: windows-build-rust-debug
+  #   name: Android Debug Export
+  #   runs-on: ubuntu-22.04
+  #   container:
+  #     image: robotnikdev/godot-rust-ci:4.3
+  #     credentials:
+  #       username: robotnikdev
+  #       password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #     - name: Download Artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: windows-build-rust-debug
+  #         path: rust/target/debug
+  #     - name: Setup
+  #       run: |
+  #         mkdir -v -p ~/.local/share/godot/export_templates/
+  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+  #     - name: Android Debug Build
+  #       run: |
+  #         mkdir -v -p build/android
+  #         EXPORT_DIR="$(readlink -f build)"
+  #         cd $GODOT_PROJECT_PATH
+  #         godot --headless --verbose --export-debug "Android Debug" "$EXPORT_DIR/android/$EXPORT_GAME_NAME-debug.apk"
+  #     - name: Upload Artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: android-debug
+  #         path: build/android
