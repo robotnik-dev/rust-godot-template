@@ -1,8 +1,6 @@
 name: "godot-rust-ci export"
 on: push
 
-# NOTE: If your `project.godot` is at the repository root, set `GODOT_PROJECT_PATH` below to ".".
-
 env:
   GODOT_VERSION: 4.3
   EXPORT_NAME: game
@@ -10,26 +8,25 @@ env:
   RUST_PROJECT_PATH: rust
 
 jobs:
-  build-rust:
-    name: Build rust
+  build-rust-linux:
+    name: Build rust linux
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           lfs: true
-      - name: rust setup
+      - name: Setup rust
         run: rustup default stable
-      - name: rust Build
-        # TODO: cross compilen for windows, mac, etc because files are not there
+      - name: Build rust
         run: |
           cd $RUST_PROJECT_PATH
-          cargo build
+          cargo build --release
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: rust-build
-          path: rust/target
+          name: rust-build-linux
+          path: rust/target/release
 
   # export-windows:
   #   needs: build-rust
@@ -49,7 +46,7 @@ jobs:
   #       uses: actions/download-artifact@v4
   #       with:
   #         name: rust-build
-  #         path: rust/target
+  #         path: rust/target/release
   #     - name: Setup
   #       run: |
   #         mkdir -v -p ~/.local/share/godot/export_templates/
@@ -69,7 +66,7 @@ jobs:
   #         path: build/windows
 
   export-linux:
-    needs: build-rust
+    needs: build-rust-linux
     name: Linux Export
     runs-on: ubuntu-22.04
     container:
@@ -85,13 +82,13 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
-          name: rust-build
+          name: rust-build-linux
           path: rust/target/release
       - name: Setup
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
           mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-          ls rust/target/debug
+          ls rust/target/release
       - name: Linux Build
         run: |
           mkdir -v -p build/linux
