@@ -3,7 +3,7 @@ on: push
 
 env:
   GODOT_VERSION: 4.3
-  EXPORT_NAME: game
+  EXPORT_GAME_NAME: game
   GODOT_PROJECT_PATH: godot
   RUST_PROJECT_PATH: rust
 
@@ -70,30 +70,28 @@ jobs:
           name: windows-build-rust
           path: rust/target/x86_64-pc-windows-gnu/release
 
-  # mac-build-rust:
-  #   name: Mac Build Rust
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         lfs: true
-  #     - name: Setup Rust
-  #       run: |
-  #         curl -L https://github.com/roblabla/MacOSX-SDKs/releases/download/13.3/MacOSX13.3.sdk.tar.xz | tar xJ
-  #         export SDKROOT=$(pwd)/MacOSX13.3.sdk/
-  #         export PATH=$PATH:~/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin/
-  #         export CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER=rust-lld
-  #         rustup target add x86_64-apple-darwin
-  #     - name: Build Rust
-  #       run: |
-  #         cd $RUST_PROJECT_PATH
-  #         cargo build --release --target x86_64-apple-darwin
-  #     - name: Upload Artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: mac-build-rust
-  #         path: rust/target/release
+  mac-build-rust:
+    name: Mac Build Rust
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Setup And Build Rust
+        run: |
+          cd $RUST_PROJECT_PATH
+          curl -L https://github.com/roblabla/MacOSX-SDKs/releases/download/13.3/MacOSX13.3.sdk.tar.xz | tar xJ
+          export SDKROOT=$(pwd)/MacOSX13.3.sdk/
+          export PATH=$PATH:~/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin/
+          export CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER=rust-lld
+          rustup target add x86_64-apple-darwin
+          cargo build --release --target x86_64-apple-darwin
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-build-rust
+          path: rust/target/release
 
   export-linux:
     needs: linux-build-rust-release
@@ -123,7 +121,7 @@ jobs:
           mkdir -v -p build/linux
           EXPORT_DIR="$(readlink -f build)"
           cd $GODOT_PROJECT_PATH
-          godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/$EXPORT_NAME.x86_64"
+          godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/$EXPORT_GAME_NAME.x86_64"
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -160,54 +158,17 @@ jobs:
           mkdir -v -p build/windows
           EXPORT_DIR="$(readlink -f build)"
           cd $GODOT_PROJECT_PATH
-          godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/$EXPORT_NAME.exe"
+          godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/$EXPORT_GAME_NAME.exe"
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows
           path: build/windows
 
-  # export-mac:
-  #   needs: mac-build-rust
-  #   name: Mac Export
-  #   runs-on: ubuntu-22.04
-  #   container:
-  #     image: robotnikdev/godot-rust-ci:4.3
-  #     credentials:
-  #       username: robotnikdev
-  #       password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         lfs: true
-  #     - name: Download Artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: mac-build-rust
-  #         path: rust/target/release
-  #     - name: Setup
-  #       run: |
-  #         mkdir -v -p ~/.local/share/godot/export_templates/
-  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-  #     - name: Mac Build
-  #       run: |
-  #         mkdir -v -p build/mac
-  #         EXPORT_DIR="$(readlink -f build)"
-  #         cd $GODOT_PROJECT_PATH
-  #         godot --headless --verbose --export-release "macOS" "$EXPORT_DIR/mac/$EXPORT_NAME.zip"
-  #     - name: Upload Artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: mac
-  #         path: build/mac
-
-  export-gh-pages:
-    needs: linux-build-rust-release
-    name: Github Pages Export
+  export-mac:
+    needs: mac-build-rust
+    name: Mac Export
     runs-on: ubuntu-22.04
-    permissions:
-      contents: write
     container:
       image: robotnikdev/godot-rust-ci:4.3
       credentials:
@@ -221,31 +182,68 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
-          name: linux-build-rust-release
+          name: mac-build-rust
           path: rust/target/release
       - name: Setup
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
           mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: Github Pages Build
+      - name: Mac Build
         run: |
-          mkdir -v -p build/gh-pages
+          mkdir -v -p build/mac
           EXPORT_DIR="$(readlink -f build)"
           cd $GODOT_PROJECT_PATH
-          godot --headless --verbose --export-release "Web" "$EXPORT_DIR/gh-pages/index.html"
+          godot --headless --verbose --export-release "macOS" "$EXPORT_DIR/mac/$EXPORT_GAME_NAME.zip"
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gh-pages
-          path: build/gh-pages
-      - name: Install rsync
-        run: |
-          apt-get update && apt-get install -y rsync
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@releases/v4
-        with:
-          branch: gh-pages
-          folder: build/gh-pages
+          name: mac
+          path: build/mac
+
+  # export-gh-pages:
+  #   needs: linux-build-rust-release
+  #   name: Github Pages Export
+  #   runs-on: ubuntu-22.04
+  #   permissions:
+  #     contents: write
+  #   container:
+  #     image: robotnikdev/godot-rust-ci:4.3
+  #     credentials:
+  #       username: robotnikdev
+  #       password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #     - name: Download Artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: linux-build-rust-release
+  #         path: rust/target/release
+  #     - name: Setup
+  #       run: |
+  #         mkdir -v -p ~/.local/share/godot/export_templates/
+  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+  #     - name: Github Pages Build
+  #       run: |
+  #         mkdir -v -p build/gh-pages
+  #         EXPORT_DIR="$(readlink -f build)"
+  #         cd $GODOT_PROJECT_PATH
+  #         godot --headless --verbose --export-release "Web" "$EXPORT_DIR/gh-pages/index.html"
+  #     - name: Upload Artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: gh-pages
+  #         path: build/gh-pages
+  #     - name: Install rsync
+  #       run: |
+  #         apt-get update && apt-get install -y rsync
+  #     - name: Deploy to GitHub Pages
+  #       uses: JamesIves/github-pages-deploy-action@releases/v4
+  #       with:
+  #         branch: gh-pages
+  #         folder: build/gh-pages
 
   # Android Debug Job. It will use the generated debug.keystore.
   export-android-debug:
@@ -276,7 +274,7 @@ jobs:
           mkdir -v -p build/android
           EXPORT_DIR="$(readlink -f build)"
           cd $GODOT_PROJECT_PATH
-          godot --headless --verbose --export-debug "Android Debug" "$EXPORT_DIR/android/$EXPORT_NAME-debug.apk"
+          godot --headless --verbose --export-debug "Android Debug" "$EXPORT_DIR/android/$EXPORT_GAME_NAME-debug.apk"
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
