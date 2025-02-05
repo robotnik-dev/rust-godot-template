@@ -10,7 +10,6 @@ env:
   RUST_PROJECT_PATH: rust
 
 jobs:
-  # TODO: just use simple rust image
   build-rust:
     name: Build rust
     runs-on: ubuntu-22.04
@@ -30,7 +29,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: rust-build
-          path: build/rust
+          path: rust/target/release
 
   export-windows:
     needs: build-rust
@@ -50,6 +49,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: rust-build
+          path: rust/target/release
       - name: Setup
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
@@ -68,147 +68,151 @@ jobs:
           name: windows
           path: build/windows
 
-  export-linux:
-    needs: build-rust
-    name: Linux Export
-    runs-on: ubuntu-22.04
-    container:
-      image: robotnikdev/godot-rust-ci:4.3
-      credentials:
-        username: robotnikdev
-        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: rust-build
-      - name: Setup
-        run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: Linux Build
-        run: |
-          mkdir -v -p build/linux
-          EXPORT_DIR="$(readlink -f build)"
-          cd $GODOT_PROJECT_PATH
-          godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/$EXPORT_NAME.x86_64"
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux
-          path: build/linux
+  # export-linux:
+  #   needs: build-rust
+  #   name: Linux Export
+  #   runs-on: ubuntu-22.04
+  #   container:
+  #     image: robotnikdev/godot-rust-ci:4.3
+  #     credentials:
+  #       username: robotnikdev
+  #       password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #     - name: Download Artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: rust-build
+  #         path: rust/target/release
+  #     - name: Setup
+  #       run: |
+  #         mkdir -v -p ~/.local/share/godot/export_templates/
+  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+  #     - name: Linux Build
+  #       run: |
+  #         mkdir -v -p build/linux
+  #         EXPORT_DIR="$(readlink -f build)"
+  #         cd $GODOT_PROJECT_PATH
+  #         godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/$EXPORT_NAME.x86_64"
+  #     - name: Upload Artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: linux
+  #         path: build/linux
 
-  export-web:
-    needs: build-rust
-    name: Web Export
-    runs-on: ubuntu-22.04
-    container:
-      image: robotnikdev/godot-rust-ci:4.3
-      credentials:
-        username: robotnikdev
-        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: rust-build
-      - name: Setup
-        run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: Web Build
-        run: |
-          mkdir -v -p build/web
-          EXPORT_DIR="$(readlink -f build)"
-          cd $GODOT_PROJECT_PATH
-          godot --headless --verbose --export-release "Web" "$EXPORT_DIR/web/index.html"
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: web
-          path: build/web
-      - name: Install rsync 📚
-        run: |
-          apt-get update && apt-get install -y rsync
-      - name: Deploy to GitHub Pages 🚀
-        uses: JamesIves/github-pages-deploy-action@releases/v4
-        with:
-          branch: gh-pages # The branch the action should deploy to.
-          folder: build/web # The folder the action should deploy.
+  # export-web:
+  #   needs: build-rust
+  #   name: Web Export
+  #   runs-on: ubuntu-22.04
+  #   container:
+  #     image: robotnikdev/godot-rust-ci:4.3
+  #     credentials:
+  #       username: robotnikdev
+  #       password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #     - name: Download Artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: rust-build
+  #         path: rust/target/release
+  #     - name: Setup
+  #       run: |
+  #         mkdir -v -p ~/.local/share/godot/export_templates/
+  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+  #     - name: Web Build
+  #       run: |
+  #         mkdir -v -p build/web
+  #         EXPORT_DIR="$(readlink -f build)"
+  #         cd $GODOT_PROJECT_PATH
+  #         godot --headless --verbose --export-release "Web" "$EXPORT_DIR/web/index.html"
+  #     - name: Upload Artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: web
+  #         path: build/web
+  #     - name: Install rsync 📚
+  #       run: |
+  #         apt-get update && apt-get install -y rsync
+  #     - name: Deploy to GitHub Pages 🚀
+  #       uses: JamesIves/github-pages-deploy-action@releases/v4
+  #       with:
+  #         branch: gh-pages # The branch the action should deploy to.
+  #         folder: build/web # The folder the action should deploy.
 
-  export-mac:
-    needs: build-rust
-    name: Mac Export
-    runs-on: ubuntu-22.04
-    container:
-      image: robotnikdev/godot-rust-ci:4.3
-      credentials:
-        username: robotnikdev
-        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: rust-build
-      - name: Setup
-        run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: Mac Build
-        run: |
-          mkdir -v -p build/mac
-          EXPORT_DIR="$(readlink -f build)"
-          cd $GODOT_PROJECT_PATH
-          godot --headless --verbose --export-release "macOS" "$EXPORT_DIR/mac/$EXPORT_NAME.zip"
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: mac
-          path: build/mac
+  # export-mac:
+  #   needs: build-rust
+  #   name: Mac Export
+  #   runs-on: ubuntu-22.04
+  #   container:
+  #     image: robotnikdev/godot-rust-ci:4.3
+  #     credentials:
+  #       username: robotnikdev
+  #       password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #     - name: Download Artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: rust-build
+  #         path: rust/target/release
+  #     - name: Setup
+  #       run: |
+  #         mkdir -v -p ~/.local/share/godot/export_templates/
+  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+  #     - name: Mac Build
+  #       run: |
+  #         mkdir -v -p build/mac
+  #         EXPORT_DIR="$(readlink -f build)"
+  #         cd $GODOT_PROJECT_PATH
+  #         godot --headless --verbose --export-release "macOS" "$EXPORT_DIR/mac/$EXPORT_NAME.zip"
+  #     - name: Upload Artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: mac
+  #         path: build/mac
 
-  # Android Debug Job. It will use the generated debug.keystore.
-  export-android-debug:
-    needs: build-rust
-    name: Android Debug Export
-    runs-on: ubuntu-22.04
-    container:
-      image: robotnikdev/godot-rust-ci:4.3
-      credentials:
-        username: robotnikdev
-        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: rust-build
-      - name: Setup
-        run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: Android Debug Build
-        run: |
-          mkdir -v -p build/android
-          EXPORT_DIR="$(readlink -f build)"
-          cd $GODOT_PROJECT_PATH
-          godot --headless --verbose --export-debug "Android Debug" "$EXPORT_DIR/android/$EXPORT_NAME-debug.apk"
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-debug
-          path: build/android
+  # # Android Debug Job. It will use the generated debug.keystore.
+  # export-android-debug:
+  #   needs: build-rust
+  #   name: Android Debug Export
+  #   runs-on: ubuntu-22.04
+  #   container:
+  #     image: robotnikdev/godot-rust-ci:4.3
+  #     credentials:
+  #       username: robotnikdev
+  #       password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #     - name: Download Artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: rust-build
+  #         path: rust/target/release
+  #     - name: Setup
+  #       run: |
+  #         mkdir -v -p ~/.local/share/godot/export_templates/
+  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+  #     - name: Android Debug Build
+  #       run: |
+  #         mkdir -v -p build/android
+  #         EXPORT_DIR="$(readlink -f build)"
+  #         cd $GODOT_PROJECT_PATH
+  #         godot --headless --verbose --export-debug "Android Debug" "$EXPORT_DIR/android/$EXPORT_NAME-debug.apk"
+  #     - name: Upload Artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: android-debug
+  #         path: build/android
