@@ -8,8 +8,28 @@ env:
   RUST_PROJECT_PATH: rust
 
 jobs:
-  linux-build-rust:
-    name: Linux Build Rust
+  linux-build-rust-debug:
+    name: Linux Build Rust Debug
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Setup Rust
+        run: rustup default stable
+      - name: Build Rust
+        run: |
+          cd $RUST_PROJECT_PATH
+          cargo build
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build-rust-debug
+          path: rust/target/debug
+
+  linux-build-rust-release:
+    name: Linux Build Rust Release
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -22,16 +42,11 @@ jobs:
         run: |
           cd $RUST_PROJECT_PATH
           cargo build --release
-      - name: Upload Artifact Release
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-build-rust-release
           path: rust/target/release
-      - name: Upload Artifact Release
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-build-rust-debug
-          path: rust/target/debug
 
   windows-build-rust:
     name: Windows Build Rust
@@ -69,12 +84,11 @@ jobs:
           export SDKROOT=$(pwd)/MacOSX13.3.sdk/
           export PATH=$PATH:~/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin/
           export CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER=rust-lld
-          rustup target add x86_64-apple-darwin aarch64-apple-darwin
+          rustup target add x86_64-apple-darwin
       - name: Build Rust
         run: |
           cd $RUST_PROJECT_PATH
           cargo build --release --target x86_64-apple-darwin
-          cargo build --release --target aarch64-apple-darwin
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -82,7 +96,7 @@ jobs:
           path: rust/target/release
 
   export-linux:
-    needs: linux-build-rust
+    needs: linux-build-rust-release
     name: Linux Export
     runs-on: ubuntu-22.04
     container:
@@ -189,7 +203,7 @@ jobs:
           path: build/mac
 
   export-gh-pages:
-    needs: linux-build-rust
+    needs: linux-build-rust-release
     name: Github Pages Export
     runs-on: ubuntu-22.04
     container:
@@ -214,7 +228,7 @@ jobs:
       - name: Github Pages Build
         run: |
           mkdir -v -p build/gh-pages
-          EXPORT_DIR="$(readlink -f gh-pages)"
+          EXPORT_DIR="$(readlink -f build)"
           cd $GODOT_PROJECT_PATH
           godot --headless --verbose --export-release "Web" "$EXPORT_DIR/gh-pages/index.html"
       - name: Upload Artifact
@@ -233,7 +247,7 @@ jobs:
 
   # Android Debug Job. It will use the generated debug.keystore.
   export-android-debug:
-    needs: linux-build-rust
+    needs: linux-build-rust-debug
     name: Android Debug Export
     runs-on: ubuntu-22.04
     container:
