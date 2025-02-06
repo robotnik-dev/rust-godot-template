@@ -22,8 +22,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
-      - name: Setup
-        run: ls ~/.cargo
       - name: Build
         run: cargo build --release
         working-directory: rust
