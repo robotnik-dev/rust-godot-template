@@ -15,9 +15,11 @@ jobs:
   linux-build-and-test:
     name: Linux Build And Test
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: rust
+    container:
+      image: robotnikdev/godot-rust-ci:4.3
+      credentials:
+        username: robotnikdev
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,146 +29,150 @@ jobs:
         run: rustup default stable
       - name: Build
         run: cargo build --release
-      - name: Test
-        run: cargo test --no-fail-fast --release -v
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-build
-          path: rust/target/release
-
-  windows-build-and-test:
-    name: Windows Build And Test
-    runs-on: ubuntu-latest
-    defaults:
-      run:
         working-directory: rust
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Setup
-        run: |
-          rustup target add x86_64-pc-windows-gnu
-          sudo apt remove --purge --auto-remove mono-runtime
-          sudo apt install mingw-w64 wine wine-binfmt
-      - name: Build
-        run: cargo build --release --target x86_64-pc-windows-gnu
       - name: Test
         run: cargo test --no-fail-fast --release -v
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-build
-          path: rust/target/x86_64-pc-windows-gnu/release
+        working-directory: rust
+      # - name: Upload Artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: linux-build
+      #     path: rust/target/release
 
-  linux-export:
-    needs: linux-build-and-test
-    name: Linux Export
-    runs-on: ubuntu-latest
-    container:
-      image: robotnikdev/godot-rust-ci:4.3
-      credentials:
-        username: robotnikdev
-        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-build
-          path: rust/target/release
-      - name: Setup
-        run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: Export
-        run: |
-          mkdir -v -p build/linux
-          EXPORT_DIR="$(readlink -f build)"
-          cd $GODOT_PROJECT_PATH
-          godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/$EXPORT_GAME_NAME.x86_64"
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: true
-          files: ./build/linux
+  # windows-build-and-test:
+  #   name: Windows Build And Test
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: rust
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #     - name: Setup
+  #       run: |
+  #         rustup target add x86_64-pc-windows-gnu
+  #         sudo apt remove --purge --auto-remove mono-runtime
+  #         sudo apt install mingw-w64 wine wine-binfmt
+  #     - name: Build
+  #       run: cargo build --release --target x86_64-pc-windows-gnu
+  #     - name: Test
+  #       run: cargo test --no-fail-fast --release -v
+  #     - name: Upload Artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: windows-build
+  #         path: rust/target/x86_64-pc-windows-gnu/release
 
-  windows-export:
-    needs: windows-build-and-test
-    name: Windows Export
-    runs-on: ubuntu-latest
-    container:
-      image: robotnikdev/godot-rust-ci:4.3
-      credentials:
-        username: robotnikdev
-        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-build
-          path: rust/target/release
-      - name: Setup
-        run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mkdir -v -p ~/.config/
-          mv /root/.config/godot ~/.config/godot
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: Export
-        run: |
-          mkdir -v -p build/windows
-          EXPORT_DIR="$(readlink -f build)"
-          cd $GODOT_PROJECT_PATH
-          godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/$EXPORT_GAME_NAME.exe"
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: true
-          files: ./build/windows
+  # linux-export:
+  #   needs: linux-build-and-test
+  #   name: Linux Export
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: robotnikdev/godot-rust-ci:4.3
+  #     credentials:
+  #       username: robotnikdev
+  #       password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #     - name: Download Artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: linux-build
+  #         path: rust/target/release
+  #     - name: Setup
+  #       run: |
+  #         mkdir -v -p ~/.local/share/godot/export_templates/
+  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+  #     - name: Export
+  #       run: |
+  #         mkdir -v -p build/linux
+  #         EXPORT_DIR="$(readlink -f build)"
+  #         cd $GODOT_PROJECT_PATH
+  #         godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/$EXPORT_GAME_NAME.x86_64"
+  #     # - name: Release
+  #     #   uses: softprops/action-gh-release@v2
+  #     #   with:
+  #     #     draft: true
+  #     #     files: ./build/linux
 
-  web-export:
-    needs: windows-build-and-test
-    name: Web Export
-    runs-on: ubuntu-latest
-    container:
-      image: robotnikdev/godot-rust-ci:4.3
-      credentials:
-        username: robotnikdev
-        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-build
-          path: rust/target/release
-      - name: Setup
-        run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: Export
-        run: |
-          mkdir -v -p build/web
-          EXPORT_DIR="$(readlink -f build)"
-          cd $GODOT_PROJECT_PATH
-          godot --headless --verbose --export-release "Web" "$EXPORT_DIR/web/index.html"
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: true
-          files: ./build/web
+  # windows-export:
+  #   needs: windows-build-and-test
+  #   name: Windows Export
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: robotnikdev/godot-rust-ci:4.3
+  #     credentials:
+  #       username: robotnikdev
+  #       password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #     - name: Download Artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: windows-build
+  #         path: rust/target/release
+  #     - name: Setup
+  #       run: |
+  #         mkdir -v -p ~/.local/share/godot/export_templates/
+  #         mkdir -v -p ~/.config/
+  #         mv /root/.config/godot ~/.config/godot
+  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+  #     - name: Export
+  #       run: |
+  #         mkdir -v -p build/windows
+  #         EXPORT_DIR="$(readlink -f build)"
+  #         cd $GODOT_PROJECT_PATH
+  #         godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/$EXPORT_GAME_NAME.exe"
+  #     # - name: Release
+  #     #   uses: softprops/action-gh-release@v2
+  #     #   with:
+  #     #     draft: true
+  #     #     files: ./build/windows
+
+  # web-export:
+  #   needs: windows-build-and-test
+  #   name: Web Export
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: robotnikdev/godot-rust-ci:4.3
+  #     credentials:
+  #       username: robotnikdev
+  #       password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #     - name: Download Artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: windows-build
+  #         path: rust/target/release
+  #     - name: Setup
+  #       run: |
+  #         mkdir -v -p ~/.local/share/godot/export_templates/
+  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+  #     - name: Export
+  #       run: |
+  #         mkdir -v -p build/web
+  #         EXPORT_DIR="$(readlink -f build)"
+  #         cd $GODOT_PROJECT_PATH
+  #         godot --headless --verbose --export-release "Web" "$EXPORT_DIR/web/index.html"
+      
+      
+      # - name: Release
+      #   uses: softprops/action-gh-release@v2
+      #   with:
+      #     draft: true
+      #     files: ./build/web
 
   # create-release-draft:
   #   needs: [linux-export, windows-export, web-export]
