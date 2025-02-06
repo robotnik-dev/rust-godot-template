@@ -40,6 +40,8 @@ jobs:
           cd $GODOT_PROJECT_PATH
           godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/${{ vars.GAMENAME }}.x86_64"
       - name: Deploy
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
           butler push build/linux ${{ secrets.ITCHIO_USERNAME }}/${{ vars.GAMENAME }}:linux --userversion ${{ github.ref }}
 
@@ -58,8 +60,6 @@ jobs:
           lfs: true
       - name: Setup
         run: |
-          sudo apt remove --purge --auto-remove mono-runtime
-          sudo apt install mingw-w64 wine wine-binfmt
           rustup default stable
           rustup target add x86_64-pc-windows-gnu
       - name: Build
@@ -81,6 +81,8 @@ jobs:
           godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/${{ vars.GAMENAME }}.exe"
           godot --headless --verbose --export-release "Web" "$EXPORT_DIR/web/index.html"
       - name: Deploy
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
           butler push build/windows ${{ secrets.ITCHIO_USERNAME }}/${{ vars.GAMENAME }}:windows --userversion ${{ github.ref }}
           butler push build/web ${{ secrets.ITCHIO_USERNAME }}/${{ vars.GAMENAME }}:web --userversion ${{ github.ref }}
