@@ -22,7 +22,7 @@ jobs:
         with:
           lfs: true
       - name: release-downloader
-        uses: robinraju/release-downloader@v1.11
+        uses: robinraju/release-downloader@v1
         with:
           latest: true
           token: ${{ secrets.GH_PAT }}
