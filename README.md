@@ -1,6 +1,6 @@
 # Godot-Rust template
 
-![CI](https://github.com/robotnik-dev/rust-godot-template/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/robotnik-dev/rust-godot-template/actions/workflows/ci.yaml/badge.svg)
 
 A setup to build a Godot 4 app with rust bindings.
 > To run the game you need to follow the [setup](#setup) guide even if you dont touch the rust files at all.
