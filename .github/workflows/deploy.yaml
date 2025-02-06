@@ -1,0 +1,75 @@
+name: CD Deploy
+
+on:
+  release:
+    types: [published]
+
+env:
+  BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+
+jobs:
+  itch-windows:
+    name: Itch.io Windows Deploy
+    runs-on: ubuntu-22.04
+    container:
+      image: robotnikdev/godot-rust-ci:4.3
+      credentials:
+        username: robotnikdev
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Download Build
+        uses: actions/download-artifact@v4
+        with:
+          name: windows
+          path: build/windows
+      - name: Deploy
+        run: |
+          butler push ./build/windows ${{ secrets.ITCHIO_USERNAME }}/${{ vars.GAMENAME }}:windows --userversion ${{ github.ref }}
+
+  itch-linux:
+    name: Itch.io Linux Deploy
+    runs-on: ubuntu-22.04
+    container:
+      image: robotnikdev/godot-rust-ci:4.3
+      credentials:
+        username: robotnikdev
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Download Build
+        uses: actions/download-artifact@v4
+        with:
+          name: linux
+          path: build/linux
+      - name: Deploy
+        run: |
+          butler push ./build/linux ${{ secrets.ITCHIO_USERNAME }}/${{ secrets.ITCHIO_GAMENAME }}:linux --userversion ${{ github.ref }}
+
+  itch-web:
+    name: Itch.io Web Deploy
+    runs-on: ubuntu-22.04
+    container:
+      image: robotnikdev/godot-rust-ci:4.3
+      credentials:
+        username: robotnikdev
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Download Build
+        uses: actions/download-artifact@v4
+        with:
+          name: web
+          path: build/web
+      - name: Deploy
+        run: |
+          butler push ./build/web ${{ secrets.ITCHIO_USERNAME }}/${{ secrets.ITCHIO_GAMENAME }}:web --userversion ${{ github.ref }}

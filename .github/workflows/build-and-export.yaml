@@ -1,9 +1,13 @@
-name: "godot-rust-ci"
-on: push
+name: CI Build and Export
+on:
+  workflow_run:
+    workflows: ["CI Test"]
+    types:
+      - completed
 
 env:
   GODOT_VERSION: 4.3
-  EXPORT_GAME_NAME: game
+  EXPORT_GAME_NAME: ${{ vars.GAMENAME }}
   GODOT_PROJECT_PATH: godot
   RUST_PROJECT_PATH: rust
 
@@ -33,6 +37,7 @@ jobs:
   linux-build-rust:
     name: Linux Build Rust
     runs-on: ubuntu-22.04
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,6 +58,7 @@ jobs:
   windows-build-rust:
     name: Windows Build Rust
     runs-on: ubuntu-22.04
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -166,6 +172,41 @@ jobs:
         with:
           name: windows
           path: build/windows
+
+  export-web:
+    needs: linux-build-rust
+    name: Web Export
+    runs-on: ubuntu-22.04
+    container:
+      image: robotnikdev/godot-rust-ci:4.3
+      credentials:
+        username: robotnikdev
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-build-rust
+          path: rust/target/release
+      - name: Setup
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+      - name: Web Build
+        run: |
+          mkdir -v -p build/web
+          EXPORT_DIR="$(readlink -f build)"
+          cd $GODOT_PROJECT_PATH
+          godot --headless --verbose --export-release "Web" "$EXPORT_DIR/web/index.html"
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: build/web
 
   # export-mac:
   #   needs: mac-build-rust
