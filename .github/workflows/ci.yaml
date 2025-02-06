@@ -23,7 +23,7 @@ jobs:
         with:
           lfs: true
       - name: Setup
-        run: env
+        run: ls ~/.cargo
       - name: Build
         run: cargo build --release
         working-directory: rust
