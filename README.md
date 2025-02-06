@@ -21,3 +21,8 @@ Make sure you have the following installed
 3. Build the project once with the shortcut "CTRL+SHIFT+B" and select "godot-rust: Build Debug"
 4. Build it again in release mode: "CTRL+SHIFT+B" and select "godot-rust: Build Release"
 5. Now you can close VSCode and open the game via the godot launcher
+
+# CI
+
+Set the following Secrets and Vars for this project for the CI/CD pipeline
+
