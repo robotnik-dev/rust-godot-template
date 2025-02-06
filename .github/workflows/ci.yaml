@@ -8,7 +8,6 @@ on:
 env:
   GODOT_VERSION: 4.3
   GODOT_PROJECT_PATH: godot
-  RUST_PROJECT_PATH: rust
 
 jobs:
   linux:
@@ -28,10 +27,10 @@ jobs:
         run: rustup default stable
       - name: Build
         run: cargo build --release
-        working-directory: $RUST_PROJECT_PATH
+        working-directory: rust
       - name: Test
         run: cargo test --no-fail-fast --release -v
-        working-directory: $RUST_PROJECT_PATH
+        working-directory: rust
       - name: Export
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
@@ -65,10 +64,10 @@ jobs:
           rustup target add x86_64-pc-windows-gnu
       - name: Build
         run: cargo build --release --target x86_64-pc-windows-gnu
-        working-directory: $RUST_PROJECT_PATH
+        working-directory: rust
       - name: Test
         run: cargo test --no-fail-fast --release -v
-        working-directory: $RUST_PROJECT_PATH
+        working-directory: rust
       - name: Export
         run: |
           mkdir -v -p rust/target/release
