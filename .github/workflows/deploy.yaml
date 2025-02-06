@@ -21,14 +21,22 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
+      - name: Setup
+        run: |
+          mkdir -v -p build/windows
+          mkdir -v -p build/linux
+          mkdir -v -p build/web
       - name: release-downloader
         uses: robinraju/release-downloader@v1
         with:
           latest: true
           token: ${{ secrets.GH_PAT }}
+          fileName: '*.zip'
+          out-file-path: 'build/windows'
+          extract: true
       - name: Deploy
         run: |
-          butler push ./build/windows ${{ secrets.ITCHIO_USERNAME }}/${{ vars.GAMENAME }}:windows --userversion ${{ github.ref }}
+          butler push build/windows ${{ secrets.ITCHIO_USERNAME }}/${{ vars.GAMENAME }}:windows --userversion ${{ github.ref }}
 
   itchio-linux:
     name: Itch.io Linux Deploy
