@@ -24,6 +24,23 @@ Make sure you have the following installed
 5. Now you can close VSCode and open the game via the godot launcher
 
 # CI
+Builds and exports the game after each push.
 
-Set the following Secrets and Vars for this project for the CI/CD pipeline
+# CD
+1. For the CD pipeline to run you have to push a new tag in the format
 
+        v*.*.*
+
+    The same tag will be used to deploy the game to different platforms.
+
+2. Set the following repository variable and secrets
+    
+    vars:
+
+        ITCHIO_GAMENAME
+    
+    secrets:
+
+        BUTLER_API_KEY
+        DOCKER_HUB_PASSWORD
+        ITCHIO_USERNAME

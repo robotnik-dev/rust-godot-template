@@ -12,7 +12,7 @@ env:
 jobs:
   linux:
     name: Linux Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     container:
       image: robotnikdev/godot-rust-ci:4.3
       credentials:
@@ -42,7 +42,7 @@ jobs:
 
   windows:
     name: Windows Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     container:
       image: robotnikdev/godot-rust-ci:4.3
       credentials:
@@ -68,15 +68,15 @@ jobs:
           mkdir -v -p rust/target/release
           mv rust/target/x86_64-pc-windows-gnu/release rust/target/release
           mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mv -v /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
           mkdir -v -p build/windows
           EXPORT_DIR="$(readlink -f build)"
           cd $PROJECT_PATH
           godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/${{ vars.ITCHIO_GAMENAME }}.exe"
 
   # Android Debug Job. It will use the generated debug.keystore.
-  export-android-debug:
-    name: Android Debug Export
+  android-debug:
+    name: Android Debug Build
     runs-on: ubuntu-20.04
     container:
       image: robotnikdev/godot-rust-ci:4.3
@@ -95,14 +95,13 @@ jobs:
         working-directory: rust
       - name: Test
         run: cargo test --no-fail-fast --release -v
+        working-directory: rust
       - name: Export
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
           mkdir -v -p ~/.config/
           mv /root/.config/godot ~/.config/godot
           mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      - name: Android Build
-        run: |
           mkdir -v -p build/android
           EXPORT_DIR="$(readlink -f build)"
           cd $PROJECT_PATH
