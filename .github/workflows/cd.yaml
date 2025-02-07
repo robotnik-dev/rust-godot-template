@@ -2,7 +2,7 @@ name: "CI"
 
 on:
   push:
-    tags-ignore:
+    tags:
       "v*.*.*"
 
 env:
@@ -39,6 +39,11 @@ jobs:
           EXPORT_DIR="$(readlink -f build)"
           cd $PROJECT_PATH
           godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/${{ vars.ITCHIO_GAMENAME }}.x86_64"
+      - name: Deploy Itchio
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          butler push build/linux ${{ secrets.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAMENAME }}:linux --userversion ${{ github.ref }}
 
   windows:
     name: Windows Build
@@ -73,6 +78,11 @@ jobs:
           EXPORT_DIR="$(readlink -f build)"
           cd $PROJECT_PATH
           godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/${{ vars.ITCHIO_GAMENAME }}.exe"
+      - name: Deploy Itchio
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          butler push build/windows ${{ secrets.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAMENAME }}:windows --userversion ${{ github.ref }}
 
   # Android Debug Job. It will use the generated debug.keystore.
   export-android-debug:
@@ -107,3 +117,8 @@ jobs:
           EXPORT_DIR="$(readlink -f build)"
           cd $PROJECT_PATH
           godot --headless --verbose --export-debug "Android Debug" "$EXPORT_DIR/android/${{ vars.ITCHIO_GAMENAME }}-debug.apk"
+      - name: Deploy Itchio
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          butler push build/android ${{ secrets.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAMENAME }}:android --userversion ${{ github.ref }}
