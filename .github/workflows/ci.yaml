@@ -39,14 +39,14 @@ jobs:
   #         EXPORT_DIR="$(readlink -f build)"
   #         cd $GODOT_PROJECT_PATH
   #         godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/${{ vars.GAMENAME }}.x86_64"
-  #     - name: Deploy
+  #     - name: Deploy Itchio
   #       env:
   #         BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
   #       run: |
   #         butler push build/linux ${{ secrets.ITCHIO_USERNAME }}/${{ vars.GAMENAME }}:linux --userversion ${{ github.ref }}
 
-  windows-and-web:
-    name: Windows And Web Build
+  windows:
+    name: Windows Build
     runs-on: ubuntu-latest
     container:
       image: robotnikdev/godot-rust-ci:4.3
@@ -75,17 +75,54 @@ jobs:
           mkdir -v -p ~/.local/share/godot/export_templates/
           mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
           mkdir -v -p build/windows
-          mkdir -v -p build/web
           EXPORT_DIR="$(readlink -f build)"
           cd $GODOT_PROJECT_PATH
           godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/${{ vars.GAMENAME }}.exe"
-          godot --headless --verbose --export-release "Web" "$EXPORT_DIR/web/index.html"
-      - name: Deploy
+      - name: Deploy Itchio
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
           butler push build/windows ${{ secrets.ITCHIO_USERNAME }}/${{ vars.GAMENAME }}:windows --userversion ${{ github.ref }}
+
+  web:
+    name: Web Build
+    runs-on: ubuntu-latest
+    container:
+      image: robotnikdev/godot-rust-ci:4.3
+      credentials:
+        username: robotnikdev
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Setup
+        run: |
+          rustup toolchain install nightly
+          rustup component add rust-src --toolchain nightly
+          rustup target add wasm32-unknown-emscripten --toolchain nightly
+      - name: Build
+        run: |
+          cargo +nightly build -Zbuild-std --target wasm32-unknown-emscripten --release
+        working-directory: rust
+      - name: Test
+        run: cargo test --no-fail-fast --release -v
+        working-directory: rust
+      - name: Export
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -v -p build/web
+          EXPORT_DIR="$(readlink -f build)"
+          cd $GODOT_PROJECT_PATH
+          godot --headless --verbose --export-release "Web" "$EXPORT_DIR/web/index.html"
+      - name: Deploy Itchio
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
           butler push build/web ${{ secrets.ITCHIO_USERNAME }}/${{ vars.GAMENAME }}:web --userversion ${{ github.ref }}
+
 
   # windows-build-and-test:
   #   name: Windows Build And Test
