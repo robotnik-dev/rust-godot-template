@@ -3,7 +3,7 @@ name: "Deployment"
 on:
   push:
     tags:
-      "v*.*.*"
+      - "v*.*.*"
 
 env:
   GODOT_VERSION: 4.3
