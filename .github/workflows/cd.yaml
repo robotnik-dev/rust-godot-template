@@ -1,9 +1,11 @@
 name: "Deployment"
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'semantic version of the game (github tag)'
+        required: true
 
 env:
   GODOT_VERSION: 4.3
@@ -161,6 +163,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           make_latest: true
+          tag_name: ${{ github.event.inputs.version }}
           files: |
             linux.zip
             windows.zip
@@ -183,7 +186,7 @@ jobs:
           ITCH_GAME: ${{ vars.ITCHIO_GAMENAME }}
           ITCH_USER: ${{ secrets.ITCHIO_USERNAME }}
           PACKAGE: linux
-          VERSION: ${{ github.ref }}
+          VERSION: ${{ github.event.inputs.version }}
 
       - name: Deploy Windows
         uses: manleydev/butler-publish-itchio-action@v1.0.3
@@ -193,7 +196,7 @@ jobs:
           ITCH_GAME: ${{ vars.ITCHIO_GAMENAME }}
           ITCH_USER: ${{ secrets.ITCHIO_USERNAME }}
           PACKAGE: windows
-          VERSION: ${{ github.ref }}
+          VERSION: ${{ github.event.inputs.version }}
 
       - name: Deploy Android Debug
         uses: manleydev/butler-publish-itchio-action@v1.0.3
@@ -203,4 +206,4 @@ jobs:
           ITCH_GAME: ${{ vars.ITCHIO_GAMENAME }}
           ITCH_USER: ${{ secrets.ITCHIO_USERNAME }}
           PACKAGE: android-debug
-          VERSION: ${{ github.ref }}
+          VERSION: ${{ github.event.inputs.version }}

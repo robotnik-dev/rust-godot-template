@@ -1,10 +1,6 @@
 name: "Build and Test"
 
-on:
-  push:
-    tags-ignore:
-      - "v*.*.*"
-
+on: push
 
 env:
   GODOT_VERSION: 4.3
