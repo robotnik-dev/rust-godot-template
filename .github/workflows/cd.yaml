@@ -23,14 +23,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
+
       - name: Setup
         run: rustup default stable
+
       - name: Build
         run: cargo build --release
         working-directory: rust
+
       - name: Test
         run: cargo test --no-fail-fast --release -v
         working-directory: rust
+
       - name: Export
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
@@ -39,11 +43,19 @@ jobs:
           EXPORT_DIR="$(readlink -f build)"
           cd $PROJECT_PATH
           godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/${{ vars.ITCHIO_GAMENAME }}.x86_64"
+
       - name: Deploy Itchio
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
           butler push build/linux ${{ secrets.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAMENAME }}:linux --userversion ${{ github.ref }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: build/linux
+
 
   windows:
     name: Windows Build
@@ -58,16 +70,20 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
+
       - name: Setup
         run: |
           rustup default stable
           rustup target add x86_64-pc-windows-gnu
+
       - name: Build
         run: cargo build --release --target x86_64-pc-windows-gnu
         working-directory: rust
+
       - name: Test
         run: cargo test --no-fail-fast --release -v
         working-directory: rust
+
       - name: Export
         run: |
           mv rust/target/x86_64-pc-windows-gnu/release/rust.dll rust/target/release/rust.dll
@@ -77,11 +93,19 @@ jobs:
           EXPORT_DIR="$(readlink -f build)"
           cd $PROJECT_PATH
           godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/${{ vars.ITCHIO_GAMENAME }}.exe"
+
       - name: Deploy Itchio
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
           butler push build/windows ${{ secrets.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAMENAME }}:windows --userversion ${{ github.ref }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: build/windows
+
 
   # Android Debug Job. It will use the generated debug.keystore.
   android-debug:
@@ -97,14 +121,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
+
       - name: Setup
         run: rustup default stable
+
       - name: Build
         run: cargo build --release
         working-directory: rust
+
       - name: Test
         run: cargo test --no-fail-fast --release -v
         working-directory: rust
+
       - name: Export
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
@@ -115,8 +143,49 @@ jobs:
           EXPORT_DIR="$(readlink -f build)"
           cd $PROJECT_PATH
           godot --headless --verbose --export-debug "Android Debug" "$EXPORT_DIR/android/${{ vars.ITCHIO_GAMENAME }}-debug.apk"
+
       - name: Deploy Itchio
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
           butler push build/android ${{ secrets.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAMENAME }}:android --userversion ${{ github.ref }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug
+          path: build/android
+
+
+  github-release:
+    runs-on: ubuntu-20.04
+    needs: [linux, windows, android-debug]
+    permissions:
+      contents: write
+    steps:
+      - name: Download all Artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Zip Linux Artifacts
+        uses: montudor/action-zip@v1
+        with:
+          args: zip -qq -r linux.zip linux
+
+      - name: Zip Windows Artifacts
+        uses: montudor/action-zip@v1
+        with:
+          args: zip -qq -r windows.zip windows
+
+      - name: Zip Android Debug Artifacts
+        uses: montudor/action-zip@v1
+        with:
+          args: zip -qq -r android-debug.zip android-debug
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          make_latest: true
+          files: |
+            linux.zip
+            windows.zip
+            android-debug.zip
