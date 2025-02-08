@@ -107,7 +107,7 @@ jobs:
           rustup target add aarch64-linux-android
 
       - name: Build
-        run: cargo --target aarch64-linux-android
+        run: cargo build --target aarch64-linux-android
         working-directory: rust
 
       - name: Test
