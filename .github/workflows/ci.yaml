@@ -103,7 +103,9 @@ jobs:
           rustup target add wasm32-unknown-emscripten --toolchain nightly
 
       - name: Build
-        run: cargo +nightly build -Zbuild-std --target wasm32-unknown-emscripten --release
+        run: |
+          source /emsdk/emsdk_env.sh
+          cargo +nightly build -Zbuild-std --target wasm32-unknown-emscripten --release
         working-directory: rust
 
       - name: Test
