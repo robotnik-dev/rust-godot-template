@@ -94,11 +94,13 @@ jobs:
           name: windows
           path: build/windows
 
-
   # Android Debug Job. It will use the generated debug.keystore.
   android-debug:
     name: Android Debug
     runs-on: ubuntu-20.04
+    env:
+      CLANG_PATH: /usr/lib/android-sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/clang
+      CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER: /usr/lib/android-sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android31-clang
     container:
       image: robotnikdev/godot-rust-ci:4.3
       credentials:
@@ -111,14 +113,16 @@ jobs:
           lfs: true
 
       - name: Setup
-        run: rustup default stable
+        run: |
+          rustup default stable
+          rustup target add aarch64-linux-android
 
       - name: Build
-        run: cargo build --release
+        run: cargo build --target aarch64-linux-android
         working-directory: rust
 
       - name: Test
-        run: cargo test --no-fail-fast --release -v
+        run: cargo test --no-fail-fast --target aarch64-linux-android -v
         working-directory: rust
 
       - name: Export
