@@ -93,7 +93,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
-      - run: ls /emsdk -R
+      - run: source /emsdk/emsdk_env.sh
       # - name: Setup
       #   run: |
       #     rustup default stable
