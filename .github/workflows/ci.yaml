@@ -10,44 +10,86 @@ env:
   PROJECT_PATH: godot
 
 jobs:
-  linux:
-    name: Linux Build
+  # linux:
+  #   name: Linux Build
+  #   runs-on: ubuntu-20.04
+  #   container:
+  #     image: robotnikdev/godot-rust-ci:4.3
+  #     credentials:
+  #       username: robotnikdev
+  #       password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+
+  #     - name: Setup
+  #       run: rustup default stable
+
+  #     - name: Build
+  #       run: cargo build --release
+  #       working-directory: rust
+
+  #     - name: Test
+  #       run: cargo test --no-fail-fast --release -v
+  #       working-directory: rust
+
+  #     - name: Export
+  #       run: |
+  #         mkdir -v -p ~/.local/share/godot/export_templates/
+  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+  #         mkdir -v -p build/linux
+  #         EXPORT_DIR="$(readlink -f build)"
+  #         cd $PROJECT_PATH
+  #         godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/${{ vars.ITCHIO_GAMENAME }}.x86_64"
+
+
+  # windows:
+  #   name: Windows Build
+  #   runs-on: ubuntu-20.04
+  #   container:
+  #     image: robotnikdev/godot-rust-ci:4.3
+  #     credentials:
+  #       username: robotnikdev
+  #       password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+
+  #     - name: Setup
+  #       run: |
+  #         rustup default stable
+  #         rustup target add x86_64-pc-windows-gnu
+
+  #     - name: Build
+  #       run: cargo build --release --target x86_64-pc-windows-gnu
+  #       working-directory: rust
+
+  #     - name: Test
+  #       run: cargo test --no-fail-fast --release -v
+  #       working-directory: rust
+
+  #     - name: Export
+  #       run: |
+  #         mv rust/target/x86_64-pc-windows-gnu/release/rust.dll rust/target/release/rust.dll
+  #         mkdir -v -p ~/.local/share/godot/export_templates/
+  #         mv -v /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+  #         mkdir -v -p build/windows
+  #         EXPORT_DIR="$(readlink -f build)"
+  #         cd $PROJECT_PATH
+  #         godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/${{ vars.ITCHIO_GAMENAME }}.exe"
+
+
+  # Android Debug Job. It will use the generated debug.keystore.
+  android-debug:
+    name: Android Debug Build
     runs-on: ubuntu-20.04
-    container:
-      image: robotnikdev/godot-rust-ci:4.3
-      credentials:
-        username: robotnikdev
-        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - name: Setup
-        run: rustup default stable
-
-      - name: Build
-        run: cargo build --release
-        working-directory: rust
-
-      - name: Test
-        run: cargo test --no-fail-fast --release -v
-        working-directory: rust
-
-      - name: Export
-        run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-          mkdir -v -p build/linux
-          EXPORT_DIR="$(readlink -f build)"
-          cd $PROJECT_PATH
-          godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/${{ vars.ITCHIO_GAMENAME }}.x86_64"
-
-
-  windows:
-    name: Windows Build
-    runs-on: ubuntu-20.04
+    env:
+      CLANG_PATH: /usr/lib/android-sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/clang
+      CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER: /usr/lib/android-sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android34-clang
     container:
       image: robotnikdev/godot-rust-ci:4.3
       credentials:
@@ -62,51 +104,14 @@ jobs:
       - name: Setup
         run: |
           rustup default stable
-          rustup target add x86_64-pc-windows-gnu
+          rustup target add aarch64-linux-android
 
       - name: Build
-        run: cargo build --release --target x86_64-pc-windows-gnu
+        run: cargo --target aarch64-linux-android
         working-directory: rust
 
       - name: Test
-        run: cargo test --no-fail-fast --release -v
-        working-directory: rust
-
-      - name: Export
-        run: |
-          mv rust/target/x86_64-pc-windows-gnu/release/rust.dll rust/target/release/rust.dll
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mv -v /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-          mkdir -v -p build/windows
-          EXPORT_DIR="$(readlink -f build)"
-          cd $PROJECT_PATH
-          godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/${{ vars.ITCHIO_GAMENAME }}.exe"
-
-
-  # Android Debug Job. It will use the generated debug.keystore.
-  android-debug:
-    name: Android Debug Build
-    runs-on: ubuntu-20.04
-    container:
-      image: robotnikdev/godot-rust-ci:4.3
-      credentials:
-        username: robotnikdev
-        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - name: Setup
-        run: rustup default stable
-
-      - name: Build
-        run: cargo build --release
-        working-directory: rust
-
-      - name: Test
-        run: cargo test --no-fail-fast --release -v
+        run: cargo test --no-fail-fast -v
         working-directory: rust
 
       - name: Export

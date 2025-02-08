@@ -1,4 +1,4 @@
-name: "CI"
+name: "CD"
 
 on:
   push:
@@ -44,12 +44,6 @@ jobs:
           cd $PROJECT_PATH
           godot --headless --verbose --export-release "Linux" "$EXPORT_DIR/linux/${{ vars.ITCHIO_GAMENAME }}.x86_64"
 
-      - name: Deploy Itchio
-        env:
-          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
-        run: |
-          butler push build/linux ${{ secrets.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAMENAME }}:linux --userversion ${{ github.ref }}
-
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -93,12 +87,6 @@ jobs:
           EXPORT_DIR="$(readlink -f build)"
           cd $PROJECT_PATH
           godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/${{ vars.ITCHIO_GAMENAME }}.exe"
-
-      - name: Deploy Itchio
-        env:
-          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
-        run: |
-          butler push build/windows ${{ secrets.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAMENAME }}:windows --userversion ${{ github.ref }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -144,12 +132,6 @@ jobs:
           cd $PROJECT_PATH
           godot --headless --verbose --export-debug "Android Debug" "$EXPORT_DIR/android/${{ vars.ITCHIO_GAMENAME }}-debug.apk"
 
-      - name: Deploy Itchio
-        env:
-          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
-        run: |
-          butler push build/android ${{ secrets.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAMENAME }}:android --userversion ${{ github.ref }}
-
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -157,7 +139,35 @@ jobs:
           path: build/android
 
 
+  itchio-deploy:
+    name: Deploy to Itch.io
+    runs-on: ubuntu-20.04
+    needs: [linux, windows, android-debug]
+    steps:
+      - name: Download all Artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Deploy Linux
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          butler push linux ${{ secrets.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAMENAME }}:linux --userversion ${{ github.ref }}
+
+      - name: Deploy Windows
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          butler push windows ${{ secrets.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAMENAME }}:windows --userversion ${{ github.ref }}
+
+      - name: Deploy Android Debug
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          butler push android-debug ${{ secrets.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAMENAME }}:android --userversion ${{ github.ref }}
+
+
   github-release:
+    name: Create github release
     runs-on: ubuntu-20.04
     needs: [linux, windows, android-debug]
     permissions:
