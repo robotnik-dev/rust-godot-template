@@ -86,6 +86,7 @@ jobs:
           name: windows
           path: build/windows
 
+
   # Android Debug Job. It will use the generated debug.keystore.
   android-debug:
     name: Android Debug
@@ -140,28 +141,40 @@ jobs:
         uses: actions/download-artifact@v4
 
       - name: Deploy Linux
+        uses: manleydev/butler-publish-itchio-action@v1.0.3
         env:
-          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
-        run: |
-          butler push linux ${{ secrets.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAMENAME }}:linux --userversion ${{ github.ref }}
+          BUTLER_CREDENTIALS: ${{ secrets.BUTLER_API_KEY }}
+          CHANNEL: linux
+          ITCH_GAME: ${{ vars.ITCHIO_GAMENAME }}
+          ITCH_USER: ${{ secrets.ITCHIO_USERNAME }}
+          PACKAGE: linux
+          VERSION: ${{ github.ref }}
 
       - name: Deploy Windows
+        uses: manleydev/butler-publish-itchio-action@v1.0.3
         env:
-          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
-        run: |
-          butler push windows ${{ secrets.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAMENAME }}:windows --userversion ${{ github.ref }}
+          BUTLER_CREDENTIALS: ${{ secrets.BUTLER_API_KEY }}
+          CHANNEL: windows
+          ITCH_GAME: ${{ vars.ITCHIO_GAMENAME }}
+          ITCH_USER: ${{ secrets.ITCHIO_USERNAME }}
+          PACKAGE: windows
+          VERSION: ${{ github.ref }}
 
       - name: Deploy Android Debug
+        uses: manleydev/butler-publish-itchio-action@v1.0.3
         env:
-          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
-        run: |
-          butler push android-debug ${{ secrets.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAMENAME }}:android --userversion ${{ github.ref }}
+          BUTLER_CREDENTIALS: ${{ secrets.BUTLER_API_KEY }}
+          CHANNEL: android
+          ITCH_GAME: ${{ vars.ITCHIO_GAMENAME }}
+          ITCH_USER: ${{ secrets.ITCHIO_USERNAME }}
+          PACKAGE: android-debug
+          VERSION: ${{ github.ref }}
 
 
   github-release:
     name: Create github release
     runs-on: ubuntu-20.04
-    needs: [linux, windows, android-debug]
+    needs: itchio-deploy
     permissions:
       contents: write
     steps:
