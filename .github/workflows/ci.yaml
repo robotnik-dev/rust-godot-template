@@ -95,32 +95,32 @@ jobs:
           lfs: true
       - run: source /emsdk/emsdk_env.sh
         shell: bash
-      # - name: Setup
-      #   run: |
-      #     rustup default stable
-      #     rustup set auto-self-update disable
-      #     rustup toolchain install nightly
-      #     rustup component add rust-src --toolchain nightly
-      #     rustup target add wasm32-unknown-emscripten --toolchain nightly
+      - name: Setup
+        run: |
+          rustup default stable
+          rustup set auto-self-update disable
+          rustup toolchain install nightly
+          rustup component add rust-src --toolchain nightly
+          rustup target add wasm32-unknown-emscripten --toolchain nightly
 
-      # - name: Build
-      #   run: |
-      #     source /emsdk/emsdk_env.sh
-      #     cargo +nightly build -Zbuild-std --target wasm32-unknown-emscripten --release
-      #   working-directory: rust
+      - name: Build
+        run: |
+          source /emsdk/emsdk_env.sh
+          cargo +nightly build -Zbuild-std --target wasm32-unknown-emscripten --release
+        working-directory: rust
 
-      # - name: Test
-      #   run: cargo test --no-fail-fast --release -v
-      #   working-directory: rust
+      - name: Test
+        run: cargo test --no-fail-fast --release -v
+        working-directory: rust
 
-      # - name: Export
-      #   run: |
-      #     mkdir -v -p ~/.local/share/godot/export_templates/
-      #     mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-      #     mkdir -v -p build/web
-      #     EXPORT_DIR="$(readlink -f build)"
-      #     cd $PROJECT_PATH
-      #     godot --headless --verbose --export-release "Web" "$EXPORT_DIR/web/index.html"
+      - name: Export
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -v -p build/web
+          EXPORT_DIR="$(readlink -f build)"
+          cd $PROJECT_PATH
+          godot --headless --verbose --export-release "Web" "$EXPORT_DIR/web/index.html"
 
 
   # # Android Debug Job. It will use the generated debug.keystore.
