@@ -1,4 +1,4 @@
-name: "CD"
+name: "Deployment"
 
 on:
   push:
@@ -132,10 +132,45 @@ jobs:
           path: build/android
 
 
+  github-release:
+    name: Create github release
+    runs-on: ubuntu-20.04
+    needs: [linux, windows, android-debug]
+    permissions:
+      contents: write
+    steps:
+      - name: Download all Artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Zip Linux Artifacts
+        uses: montudor/action-zip@v1
+        with:
+          args: zip -qq -r linux.zip linux
+
+      - name: Zip Windows Artifacts
+        uses: montudor/action-zip@v1
+        with:
+          args: zip -qq -r windows.zip windows
+
+      - name: Zip Android Debug Artifacts
+        uses: montudor/action-zip@v1
+        with:
+          args: zip -qq -r android-debug.zip android-debug
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          make_latest: true
+          files: |
+            linux.zip
+            windows.zip
+            android-debug.zip
+
+
   itchio-deploy:
     name: Deploy to Itch.io
     runs-on: ubuntu-20.04
-    needs: [linux, windows, android-debug]
+    needs: github-release
     steps:
       - name: Download all Artifacts
         uses: actions/download-artifact@v4
@@ -169,38 +204,3 @@ jobs:
           ITCH_USER: ${{ secrets.ITCHIO_USERNAME }}
           PACKAGE: android-debug
           VERSION: ${{ github.ref }}
-
-
-  github-release:
-    name: Create github release
-    runs-on: ubuntu-20.04
-    needs: itchio-deploy
-    permissions:
-      contents: write
-    steps:
-      - name: Download all Artifacts
-        uses: actions/download-artifact@v4
-
-      - name: Zip Linux Artifacts
-        uses: montudor/action-zip@v1
-        with:
-          args: zip -qq -r linux.zip linux
-
-      - name: Zip Windows Artifacts
-        uses: montudor/action-zip@v1
-        with:
-          args: zip -qq -r windows.zip windows
-
-      - name: Zip Android Debug Artifacts
-        uses: montudor/action-zip@v1
-        with:
-          args: zip -qq -r android-debug.zip android-debug
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          make_latest: true
-          files: |
-            linux.zip
-            windows.zip
-            android-debug.zip
