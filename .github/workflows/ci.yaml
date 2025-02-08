@@ -83,55 +83,13 @@ jobs:
   #         godot --headless --verbose --export-release "Windows Desktop" "$EXPORT_DIR/windows/${{ vars.ITCHIO_GAMENAME }}.exe"
 
 
-  # # Android Debug Job. It will use the generated debug.keystore.
-  # android-debug:
-  #   name: Android Debug Build
-  #   runs-on: ubuntu-20.04
-  #   env:
-  #     CLANG_PATH: /usr/lib/android-sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/clang
-  #     CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER: /usr/lib/android-sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android34-clang
-  #   container:
-  #     image: robotnikdev/godot-rust-ci:4.3
-  #     credentials:
-  #       username: robotnikdev
-  #       password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         lfs: true
-
-  #     - name: Setup
-  #       run: |
-  #         rustup default stable
-  #         rustup target add aarch64-linux-android
-
-  #     - name: Build
-  #       run: cargo build --target aarch64-linux-android
-  #       working-directory: rust
-
-  #     - name: Test
-  #       run: cargo test --no-fail-fast -v
-  #       working-directory: rust
-
-  #     - name: Export
-  #       run: |
-  #         mkdir -v -p ~/.local/share/godot/export_templates/
-  #         mkdir -v -p ~/.config/
-  #         mv /root/.config/godot ~/.config/godot
-  #         mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-  #         mkdir -v -p build/android
-  #         EXPORT_DIR="$(readlink -f build)"
-  #         cd $PROJECT_PATH
-  #         godot --headless --verbose --export-debug "Android Debug" "$EXPORT_DIR/android/${{ vars.ITCHIO_GAMENAME }}-debug.apk"
-
   # Android Debug Job. It will use the generated debug.keystore.
-  debug:
-    name: Debug Stage
+  android-debug:
+    name: Android Debug Build
     runs-on: ubuntu-20.04
     env:
       CLANG_PATH: /usr/lib/android-sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/clang
-      CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER: /usr/lib/android-sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android34-clang
+      CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER: /usr/lib/android-sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android31-clang
     container:
       image: robotnikdev/godot-rust-ci:4.3
       credentials:
@@ -142,7 +100,27 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
-      - run: |
-          export
-          ls -R /usr/lib/android-sdk
-  
+
+      - name: Setup
+        run: |
+          rustup default stable
+          rustup target add aarch64-linux-android
+
+      - name: Build
+        run: cargo build --target aarch64-linux-android
+        working-directory: rust
+
+      - name: Test
+        run: cargo test --no-fail-fast -v
+        working-directory: rust
+
+      - name: Export
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mkdir -v -p ~/.config/
+          mv /root/.config/godot ~/.config/godot
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -v -p build/android
+          EXPORT_DIR="$(readlink -f build)"
+          cd $PROJECT_PATH
+          godot --headless --verbose --export-debug "Android Debug" "$EXPORT_DIR/android/${{ vars.ITCHIO_GAMENAME }}-debug.apk"
