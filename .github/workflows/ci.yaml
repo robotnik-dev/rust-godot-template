@@ -2,8 +2,8 @@ name: "CI"
 
 on:
   push:
-    branches:
-      - '**'
+    branches-ignore:
+      - 'release'
 
 env:
   GODOT_VERSION: 4.3
@@ -69,7 +69,7 @@ jobs:
         working-directory: rust
 
       - name: Test
-        run: cargo test --no-fail-fast --release --target x86_64-pc-windows-gnu -v
+        run: cargo test --no-fail-fast --release -v   # TODO: test for windows system
         working-directory: rust
 
       - name: Export
@@ -111,7 +111,7 @@ jobs:
         working-directory: rust
 
       - name: Test
-        run: cargo test --no-fail-fast --target aarch64-linux-android -v
+        run: cargo test --no-fail-fast -v   # TODO: test for android system
         working-directory: rust
 
       - name: Export

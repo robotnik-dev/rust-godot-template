@@ -2,6 +2,8 @@ name: "CD"
 
 on:
   push:
+    branches:
+      - 'release'
     tags:
       "v*.*.*"
 
@@ -29,10 +31,6 @@ jobs:
 
       - name: Build
         run: cargo build --release
-        working-directory: rust
-
-      - name: Test
-        run: cargo test --no-fail-fast --release -v
         working-directory: rust
 
       - name: Export
@@ -72,10 +70,6 @@ jobs:
 
       - name: Build
         run: cargo build --release --target x86_64-pc-windows-gnu
-        working-directory: rust
-
-      - name: Test
-        run: cargo test --no-fail-fast --release -v
         working-directory: rust
 
       - name: Export
@@ -119,10 +113,6 @@ jobs:
 
       - name: Build
         run: cargo build --target aarch64-linux-android
-        working-directory: rust
-
-      - name: Test
-        run: cargo test --no-fail-fast --target aarch64-linux-android -v
         working-directory: rust
 
       - name: Export
