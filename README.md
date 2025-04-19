@@ -1,46 +1,25 @@
 # Godot-Rust template
 
-![Tested](https://github.com/robotnik-dev/rust-godot-template/actions/workflows/ci.yaml/badge.svg)
-![Deployed](https://github.com/robotnik-dev/rust-godot-template/actions/workflows/cd.yaml/badge.svg)
+## Setup Github
+Set the following repository variable and secrets
 
-A setup to build a Godot 4 app with rust bindings.
-> To run the game you need to follow the [setup](#setup) guide even if you dont touch the rust files at all.
+### vars:
+- GODOT_VERSION
+- ITCHIO_GAMENAME
 
-# Setup
-## Windows
-Make sure you have the following installed
-- Godot 4.3
-- VSCode
-- rust (via rustup)
+### secrets:
+- BUTLER_API_KEY
+- ITCHIO_USERNAME
+- (Optional) DICORD_WEBHOOK
+- (Optional) ITCHIO_SECRET_URL
 
-1. After downloading Godot, extract the contents to the following path (rename Godot folder and executable):
+## Setup local
+- pull the repository
+- install VS build tools
+  - MSVC vXXX ... build tools
+  - Windows 11 SDK
 
-    C:\Program Files\Godot\Godot.exe
-
-    > This is important so that VSCode can find the godot executable.
-2. Open this folder in VSCode and install all recommended extensions (you should be asked automatically at startup)
-3. Build the project once with the shortcut "CTRL+SHIFT+B" and select "godot-rust: Build Debug"
-4. Build it again in release mode: "CTRL+SHIFT+B" and select "godot-rust: Build Release"
-5. Now you can close VSCode and open the game via the godot launcher
-
-# CI
-Builds and exports the game after each push.
-
-# CD
-1. For the CD pipeline to run you have to push a new tag in the format
-
-        v*.*.*
-
-    The same tag will be used to deploy the game to different platforms.
-
-2. Set the following repository variable and secrets
-    
-    vars:
-
-        ITCHIO_GAMENAME
-    
-    secrets:
-
-        BUTLER_API_KEY
-        DOCKER_HUB_PASSWORD
-        ITCHIO_USERNAME
+# New Godot version
+When switching to a new godot version follow these steps
+- `compatibility_minimum = 4.x` in Project.gdextension
+- set new `GODOT_VERSION` within Github
