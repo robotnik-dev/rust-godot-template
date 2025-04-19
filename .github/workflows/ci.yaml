@@ -14,7 +14,7 @@ jobs:
     name: ${{ matrix.platform.os-name }} - ${{ matrix.environment }}
     strategy:
       matrix:
-        environment: [release]
+        environment: [debug, release]
         platform:
           - os-name: Linux-x86_64
             runs-on: ubuntu-latest
@@ -84,12 +84,12 @@ jobs:
           pattern: rust-release-*
           merge-multiple: true
 
-      # - name: Download Debug Artifacts
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     path: rust/target/debug
-      #     pattern: rust-debug-*
-      #     merge-multiple: true
+      - name: Download Debug Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: rust/target/debug
+          pattern: rust-debug-*
+          merge-multiple: true
 
       - name: Rename Executables
         env:
@@ -105,8 +105,7 @@ jobs:
           relative_project_path: godot
           relative_export_path: build
           cache: true
-          # TODO: for android and web later. You can just name the presets you want to export
-          # presets_to_export: "win, linux, mac"
+          presets_to_export: "win"  # name the presets you want to export (win, linux, mac, android, web)
           verbose: true
           wine_path: ${{ steps.wine_install.outputs.WINE_PATH }}
 
