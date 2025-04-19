@@ -19,7 +19,7 @@ Set the following repository variable and secrets
   - MSVC vXXX ... build tools
   - Windows 11 SDK
 
-# New Godot version
+## New Godot version
 When switching to a new godot version follow these steps
 - `compatibility_minimum = 4.x` in Project.gdextension
 - set new `GODOT_VERSION` within Github
