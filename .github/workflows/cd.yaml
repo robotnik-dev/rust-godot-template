@@ -196,11 +196,14 @@ jobs:
   discord-notify-itchio:
     name: Notify Discord Itch.io
     needs: deploy-itchio
-    if: ${{ secrets.DISCORD_WEBHOOK != '' && secrets.ITCHIO_SECRET_URL != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Send Discord Notification
         uses: stegzilla/discord-notify@v4
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          ITCHIO_SECRET_URL: ${{ secrets.ITCHIO_SECRET_URL }}
+        if: ${{ env.DISCORD_WEBHOOK != '' && env.ITCHIO_SECRET_URL != '' }}
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK }}
           title: Neue Version veröffentlicht
