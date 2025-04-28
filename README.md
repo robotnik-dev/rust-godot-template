@@ -8,6 +8,7 @@ Set the following repository variable and secrets
 - ITCHIO_GAMENAME
 
 ### secrets:
+- PAT
 - BUTLER_API_KEY
 - ITCHIO_USERNAME
 - (Optional) DICORD_WEBHOOK
