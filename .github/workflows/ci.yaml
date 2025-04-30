@@ -19,9 +19,11 @@ jobs:
         uses: actions/checkout@v4
 
       - id: generate-matrix
+        env:
+          TARGETS: ${{ fromJson(vars.TARGETS) }}
         run: |
-          IFS=', []"' read -r -a TARGET_ARRAY <<< "$TARGETS"
-          FILTERED_JSON=$(jq -c '[.[] | select(.id as $id | ($id | in($TARGET_ARRAY)))]' target-matrix.json)
+          IFS=', []"' read -r -a TARGETS <<< "$TARGETS"
+          FILTERED_JSON=$(jq -c '[.[] | select(.id as $id | ($id | in($TARGETS)))]' target-matrix.json)
           echo "matrix=$FILTERED_JSON" >> $GITHUB_OUTPUT
 
   test-and-build:
