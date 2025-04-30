@@ -57,6 +57,9 @@ jobs:
             toolchain: stable
 
     runs-on: ${{ matrix.platform.runs-on }}
+    env:
+      TARGET: ${{ matrix.platform.id }}
+    if: ${{ contains(fromJson(vars.TARGETS), github.env.TARGET) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
