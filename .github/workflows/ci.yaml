@@ -20,7 +20,7 @@ jobs:
 
       - id: generate-matrix
         env:
-          TARGETS: ${{ fromJson(vars.TARGETS) }}
+          TARGETS: ${{ vars.TARGETS }}
         run: |
           IFS=', []"' read -r -a TARGETS <<< "$TARGETS"
           FILTERED_JSON=$(jq -c '[.[] | select(.id as $id | ($id | in($TARGETS)))]' target-matrix.json)
