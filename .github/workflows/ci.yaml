@@ -57,15 +57,14 @@ jobs:
             toolchain: stable
 
     runs-on: ${{ matrix.platform.runs-on }}
-    env:
-      TARGET: ${{ matrix.platform.id }}
-    if: ${{ contains(fromJson(vars.TARGETS), github.env.TARGET) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        if: ${{ contains(fromJson(vars.TARGETS), matrix.platform.id) }}
 
       - name: Build ${{ matrix.environment }} binary
         uses: houseabsolute/actions-rust-cross@v1.0.3
+        if: ${{ contains(fromJson(vars.TARGETS), matrix.platform.id) }}
         with:
           working-directory: rust
           # FIXME: https://github.com/cross-rs/cross/issues/1222
@@ -78,6 +77,7 @@ jobs:
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
+        if: ${{ contains(fromJson(vars.TARGETS), matrix.platform.id) }}
         with:
           name: rust-${{ matrix.environment }}-${{ matrix.platform.os-name }}-${{ matrix.platform.id }}
           path: rust/target/${{ matrix.platform.target }}/${{ matrix.environment }}/${{ matrix.platform.output }}
