@@ -6,8 +6,7 @@
         "target":"x86_64-unknown-linux-gnu",
         "output":"librust.so",
         "command":"both",
-        "toolchain":"stable",
-        "godot-download":"stable_linux.x86_64.zip"
+        "toolchain":"stable"
     },
     {
         "os-name":"Windows-x86_64",
@@ -35,8 +34,7 @@
         "output":"rust.wasm",
         "command":"build",
         "toolchain":"nightly",
-        "args":"-Zbuild-std",
-        "godot-download":"stable_linux.x86_64.zip"
+        "args":"-Zbuild-std"
     },
     {
         "os-name":"Linux-x86_64",
@@ -45,7 +43,6 @@
         "target":"x86_64-unknown-linux-gnu",
         "output":"rust.so",
         "command":"build",
-        "toolchain":"stable",
-        "godot-download":"stable_linux.x86_64.zip"
+        "toolchain":"stable"
     }
 ]
