@@ -15,10 +15,11 @@ jobs:
     outputs:
       matrix: ${{ steps.generate-matrix.outputs.matrix }}
     steps:
-      - name: Generate matrix
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - id: generate-matrix
+      - name: Generate matrix
+        id: generate-matrix
         env:
           TARGETS: ${{ vars.TARGETS }}
         run: |
@@ -89,6 +90,8 @@ jobs:
     needs: [generate-target-matrix, test-and-build]
     permissions: write-all
     runs-on: ${{ matrix.platform.runs-on }}
+    container:
+      image: flashlight13/godot:4.3
     strategy:
       matrix:
         platform: ${{fromJson(needs.generate-target-matrix.outputs.matrix)}}
@@ -98,11 +101,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install wine
-        id: wine_install
-        run: |
-          sudo apt install wine64
-          echo "WINE_PATH=$(which wine64)" >> $GITHUB_OUTPUT
+      # - name: Install wine
+      #   id: wine_install
+      #   run: |
+      #     sudo apt install wine64
+      #     echo "WINE_PATH=$(which wine64)" >> $GITHUB_OUTPUT
 
       - name: Download Release Artifacts
         uses: actions/download-artifact@v4
@@ -123,25 +126,25 @@ jobs:
       #     GAME_NAME: ${{ vars.ITCHIO_GAMENAME }}
       #   run: sed -i '/^export_path/s/mac.zip/'"$GAME_NAME"'.zip/; /^export_path/s/linux.x86_64/'"$GAME_NAME"'.x86_64/; /^export_path/s/windows.exe/'"$GAME_NAME"'.exe/' $GITHUB_WORKSPACE/godot/export_presets.cfg
 
-      # - name: Export for ${{ env.TARGET }}
-      #   working-directory: godot
-      #   run: |
-      #     mkdir ${{ env.TARGET }}
-      #     godot --headless --verbose --import
-      #     godot --headless --verbose --export-release '${{ env.TARGET }}' "${{ env.TARGET }}/index.html"
-
       - name: Export for ${{ env.TARGET }}
-        id: export
-        uses: firebelley/godot-export@v6.0.0
-        with:
-          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/${{ vars.GODOT_VERSION }}-stable/Godot_v${{ vars.GODOT_VERSION }}-stable_linux.x86_64.zip
-          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/${{ vars.GODOT_VERSION }}-stable/Godot_v${{ vars.GODOT_VERSION }}-stable_export_templates.tpz
-          relative_project_path: godot
-          relative_export_path: build
-          cache: true
-          verbose: true
-          presets_to_export: ${{ env.TARGET }}
-          wine_path: ${{ steps.wine_install.outputs.WINE_PATH }}
+        run: |
+          cd godot
+          mkdir ${{ env.TARGET }}
+          godot --headless --verbose --import
+          godot --headless --verbose --export-release '${{ env.TARGET }}' "${{ env.TARGET }}/index.html"
+
+      # - name: Export for ${{ env.TARGET }}
+      #   id: export
+      #   uses: firebelley/godot-export@v6.0.0
+      #   with:
+      #     godot_executable_download_url: https://github.com/godotengine/godot/releases/download/${{ vars.GODOT_VERSION }}-stable/Godot_v${{ vars.GODOT_VERSION }}-stable_linux.x86_64.zip
+      #     godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/${{ vars.GODOT_VERSION }}-stable/Godot_v${{ vars.GODOT_VERSION }}-stable_export_templates.tpz
+      #     relative_project_path: godot
+      #     relative_export_path: build
+      #     cache: true
+      #     verbose: true
+      #     presets_to_export: ${{ env.TARGET }}
+      #     wine_path: ${{ steps.wine_install.outputs.WINE_PATH }}
 
       - name: Upload Development Build
         uses: actions/upload-artifact@v4
