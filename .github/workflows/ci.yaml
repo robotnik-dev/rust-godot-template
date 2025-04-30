@@ -37,7 +37,7 @@ jobs:
     name: ${{ matrix.platform.os-name }} - ${{ matrix.platform.id }} - ${{ matrix.environment }}
     strategy:
       matrix:
-        environment: [debug, release]
+        environment: [release]
         platform: ${{fromJson(needs.generate-target-matrix.outputs.matrix)}}
 
     steps:
@@ -56,13 +56,38 @@ jobs:
           toolchain: ${{ matrix.platform.toolchain }}
           strip: true
 
-      - name: Upload Artifact
+      # - name: Upload Artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: rust-${{ matrix.environment }}-${{ matrix.platform.os-name }}-${{ matrix.platform.id }}
+      #     path: rust/target/${{ matrix.platform.target }}/${{ matrix.environment }}/${{ matrix.platform.output }}
+      #     retention-days: 1
+
+      # - name: Install wine
+      #   id: wine_install
+      #   run: |
+      #     sudo apt install wine64
+      #     echo "WINE_PATH=$(which wine64)" >> $GITHUB_OUTPUT
+
+      - name: Export Game for ${{ matrix.platform.id }}
+        id: export
+        uses: firebelley/godot-export@v6.0.0
+        with:
+          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/${{ vars.GODOT_VERSION }}-stable/Godot_v${{ vars.GODOT_VERSION }}-${{ matrix.platform.godot-download }}
+          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/${{ vars.GODOT_VERSION }}-stable/Godot_v${{ vars.GODOT_VERSION }}-stable_export_templates.tpz
+          relative_project_path: godot
+          relative_export_path: build
+          presets_to_export: ${{ matrix.platform.id }}
+          cache: true
+          verbose: true
+          # wine_path: ${{ steps.wine_install.outputs.WINE_PATH }}
+
+      - name: Upload Development Build
         uses: actions/upload-artifact@v4
         with:
-          name: rust-${{ matrix.environment }}-${{ matrix.platform.os-name }}-${{ matrix.platform.id }}
-          path: rust/target/${{ matrix.platform.target }}/${{ matrix.environment }}/${{ matrix.platform.output }}
+          name: ${{ matrix.platform.id }}
+          path: build/
           retention-days: 1
-
 
   # export:
   #   name: Export Game Builds
