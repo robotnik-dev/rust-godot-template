@@ -20,10 +20,11 @@ jobs:
 
       - id: generate-matrix
         env:
-          TARGETS: ${{ vars.TARGETS }}
+          TARGETS: ${{ fromJson(vars.TARGETS) }}
         run: |
-          IFS=', []"' read -r -a TARGETS <<< "$TARGETS"
-          FILTERED_JSON=$(jq -c '[.[] | select(.id as $id | ($id | in($TARGETS)))]' target-matrix.json)
+          JSON_CONTENT=$(cat target-matrix.json)
+          TARGETS_ARRAY=$(echo "$TARGETS" | jq -c '.')
+          FILTERED_JSON=$(echo "$JSON_CONTENT" | jq -c --argjson targets "$TARGETS_ARRAY" '[.[] | select(.id as $id | $targets | index($id) != null)]')
           echo "matrix=$FILTERED_JSON" >> $GITHUB_OUTPUT
 
   test-and-build:
