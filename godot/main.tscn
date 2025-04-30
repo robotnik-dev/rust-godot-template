@@ -1,17 +1,9 @@
-[gd_scene format=3 uid="uid://dif07paq3g40e"]
+[gd_scene load_steps=2 format=3 uid="uid://dif07paq3g40e"]
+
+[ext_resource type="Texture2D" uid="uid://cl5jq4rjgm5x0" path="res://icon.svg" id="1_g581i"]
 
 [node name="Main" type="Node"]
 
-[node name="Label" type="Label" parent="."]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -11.5
-offset_right = 20.0
-offset_bottom = 11.5
-grow_horizontal = 2
-grow_vertical = 2
-text = "Hello godot-rust"
+[node name="Example" type="Example" parent="."]
+position = Vector2(969, 485)
+texture = ExtResource("1_g581i")
