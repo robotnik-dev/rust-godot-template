@@ -10,62 +10,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  generate-target-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate-matrix.outputs.matrix }}
+    steps:
+      - name: Generate matrix
+        uses: actions/checkout@v4
+
+      - id: generate-matrix
+        run: |
+          IFS=', []"' read -r -a TARGET_ARRAY <<< "$TARGETS"
+          FILTERED_JSON=$(jq -c '[.[] | select(.id as $id | ($id | in($TARGET_ARRAY)))]' target-matrix.json)
+          echo "matrix=$FILTERED_JSON" >> $GITHUB_OUTPUT
+
   test-and-build:
+    needs: generate-target-matrix
+    runs-on: ${{ matrix.platform.runs_on }}
     name: ${{ matrix.platform.os-name }} - ${{ matrix.platform.id }} - ${{ matrix.environment }}
     strategy:
       matrix:
         environment: [debug, release]
-        platform:
-          - os-name: Linux-x86_64
-            id: linux
-            runs-on: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            output: librust.so
-            command: both
-            toolchain: stable
+        platform: ${{fromJson(needs.generate-target-matrix.outputs.matrix)}}
 
-          - os-name: Windows-x86_64
-            id: windows
-            runs-on: windows-latest
-            target: x86_64-pc-windows-msvc
-            output: rust.dll
-            command: both
-            toolchain: stable
-
-          - os-name: macOS-x86_64
-            id: mac
-            runs-on: macOS-latest
-            target: x86_64-apple-darwin
-            output: librust.dylib
-            command: both
-            toolchain: stable
-
-          - os-name: Linux-x86_64
-            id: web
-            runs-on: ubuntu-latest
-            target: wasm32-unknown-emscripten
-            output: rust.wasm
-            command: build
-            args: -Zbuild-std
-            toolchain: nightly
-
-          - os-name: Linux-x86_64
-            id: android
-            runs-on: ubuntu-latest
-            target: aarch64-linux-android
-            output: rust.so
-            command: both
-            toolchain: stable
-
-    runs-on: ${{ matrix.platform.runs-on }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        if: ${{ contains(fromJson(vars.TARGETS), matrix.platform.id) }}
 
       - name: Build ${{ matrix.environment }} binary
         uses: houseabsolute/actions-rust-cross@v1.0.3
-        if: ${{ contains(fromJson(vars.TARGETS), matrix.platform.id) }}
         with:
           working-directory: rust
           # FIXME: https://github.com/cross-rs/cross/issues/1222
@@ -78,7 +51,6 @@ jobs:
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
-        if: ${{ contains(fromJson(vars.TARGETS), matrix.platform.id) }}
         with:
           name: rust-${{ matrix.environment }}-${{ matrix.platform.os-name }}-${{ matrix.platform.id }}
           path: rust/target/${{ matrix.platform.target }}/${{ matrix.environment }}/${{ matrix.platform.output }}
