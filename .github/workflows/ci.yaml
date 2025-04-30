@@ -47,7 +47,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build ${{ matrix.environment }} binary
-        uses: houseabsolute/actions-rust-cross@v1.0.3
+        uses: houseabsolute/actions-rust-cross@v1.0.4
         with:
           working-directory: rust
           # FIXME: https://github.com/cross-rs/cross/issues/1222
@@ -86,29 +86,33 @@ jobs:
           sudo apt install wine64
           echo "WINE_PATH=$(which wine64)" >> $GITHUB_OUTPUT
 
-      - name: Download release artifact
+      - name: Download all release artifacts
         uses: actions/download-artifact@v4
         with:
-          path: rust/target/release/${{matrix.platform.rust-lib-path}}
+          path: rust/target/release
+          pattern: rust-release-*
+          merge-multiple: true
+
+      - name: Download Debug Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: rust/target/debug
+          pattern: rust-debug-*
+          merge-multiple: true
+
+      - name: Download target release artifact
+        uses: actions/download-artifact@v4
+        if: ${{ matrix.platform.rust-lib-path != '' }}
+        with:
+          path: rust/target/release/${{ matrix.platform.rust-lib-path }}
           pattern: rust-release-${{ matrix.platform.id }}
 
-      - name: Download debug artifact
+      - name: Download target debug artifact
         uses: actions/download-artifact@v4
+        if: ${{ matrix.platform.rust-lib-path != '' }}
         with:
-          path: rust/target/debug/${{matrix.platform.rust-lib-path}}
+          path: rust/target/debug/${{ matrix.platform.rust-lib-path }}
           pattern: rust-debug-${{ matrix.platform.id }}
-
-      # - name: Rename Executable
-      #   env:
-      #     GAME_NAME: ${{ vars.ITCHIO_GAMENAME }}
-      #   run: sed -i '/^export_path/s/mac.zip/'"$GAME_NAME"'.zip/; /^export_path/s/linux.x86_64/'"$GAME_NAME"'.x86_64/; /^export_path/s/windows.exe/'"$GAME_NAME"'.exe/' $GITHUB_WORKSPACE/godot/export_presets.cfg
-
-      # - name: Export for ${{ env.TARGET }}
-      #   run: |
-      #     cd godot
-      #     mkdir ${{ env.TARGET }}
-      #     godot --headless --verbose --import
-      #     godot --headless --verbose --export-release '${{ env.TARGET }}' "${{ env.TARGET }}/${{matrix.platform.file}}"
 
       - name: Export for ${{ env.TARGET }}
         id: export
