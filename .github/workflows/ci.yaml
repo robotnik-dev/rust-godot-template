@@ -46,7 +46,7 @@ jobs:
             target: wasm32-unknown-emscripten
             output: rust.wasm
             command: both
-            toolchain: +nightly
+            toolchain: nightly
 
           - os-name: Linux-x86_64
             id: android
