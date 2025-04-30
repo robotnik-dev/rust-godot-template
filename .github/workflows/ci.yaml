@@ -59,7 +59,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: rust-${{ matrix.environment }}-${{ matrix.platform.os-name }}-${{ matrix.platform.id }}
+          name: rust-${{ matrix.environment }}-${{ matrix.platform.id }}
           path: rust/target/${{ matrix.platform.target }}/${{ matrix.environment }}/${{ matrix.platform.output }}
           retention-days: 1
 
