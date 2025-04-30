@@ -32,6 +32,7 @@ jobs:
           echo "Generated matrix with filtered targets:"
           echo "$FILTERED_JSON" | jq '.'
 
+
   test-and-build:
     needs: generate-target-matrix
     runs-on: ${{ matrix.platform.runs-on }}
@@ -57,33 +58,13 @@ jobs:
           toolchain: ${{ matrix.platform.toolchain }}
           strip: true
 
-      - name: Upload Artifact
+      - name: Upload ${{ matrix.environment }} artifact
         uses: actions/upload-artifact@v4
         with:
           name: rust-${{ matrix.environment }}-${{ matrix.platform.id }}
           path: rust/target/${{ matrix.platform.target }}/${{ matrix.environment }}/${{ matrix.platform.output }}
           retention-days: 1
 
-      # - name: Install wine
-      #   id: wine_install
-      #   run: |
-      #     sudo apt install wine64
-      #     echo "WINE_PATH=$(which wine64)" >> $GITHUB_OUTPUT
-
-      # - name: Export Game for ${{ matrix.platform.id }}
-      #   id: export
-      #   uses: docker://flashlight13/godot:4.3
-      #   run: |
-      #     godot --headless --verbose --export-release "Web" "$EXPORT_DIR/web/index.html"
-
-
-
-      # - name: Upload Development Build
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: ${{ matrix.platform.id }}
-      #     path: build/
-      #     retention-days: 1
 
   export:
     name: Export for ${{ matrix.platform.id }}
@@ -105,19 +86,17 @@ jobs:
           sudo apt install wine64
           echo "WINE_PATH=$(which wine64)" >> $GITHUB_OUTPUT
 
-      - name: Download Release Artifacts
+      - name: Download release artifact
         uses: actions/download-artifact@v4
         with:
-          path: rust/target/release
-          pattern: rust-release-*
-          merge-multiple: true
+          path: rust/target/release/${{matrix.platform.rust-lib-path}}
+          pattern: rust-release-${{ matrix.platform.id }}
 
-      - name: Download Debug Artifacts
+      - name: Download debug artifact
         uses: actions/download-artifact@v4
         with:
-          path: rust/target/debug
-          pattern: rust-debug-*
-          merge-multiple: true
+          path: rust/target/debug/${{matrix.platform.rust-lib-path}}
+          pattern: rust-debug-${{ matrix.platform.id }}
 
       # - name: Rename Executable
       #   env:

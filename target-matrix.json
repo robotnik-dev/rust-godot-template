@@ -32,6 +32,7 @@
         "runs-on":"ubuntu-latest",
         "target":"wasm32-unknown-emscripten",
         "output":"rust.wasm",
+        "rust-lib-path":"wasm32-unknown-emscripten",
         "command":"build",
         "toolchain":"nightly",
         "args":"-Zbuild-std"
@@ -42,6 +43,7 @@
         "runs-on":"aarch64-linux-android",
         "target":"x86_64-unknown-linux-gnu",
         "output":"rust.so",
+        "rust-lib-path":"aarch64-linux-android",
         "command":"build",
         "toolchain":"stable"
     }
