@@ -27,9 +27,13 @@ jobs:
           FILTERED_JSON=$(echo "$JSON_CONTENT" | jq -c --argjson targets "$TARGETS_ARRAY" '[.[] | select(.id as $id | $targets | index($id) != null)]')
           echo "matrix=$FILTERED_JSON" >> $GITHUB_OUTPUT
 
+          # Print for debugging
+          echo "Generated matrix with filtered targets:"
+          echo "$FILTERED_JSON" | jq '.'
+
   test-and-build:
     needs: generate-target-matrix
-    runs-on: ${{ matrix.platform.runs_on }}
+    runs-on: ${{ matrix.platform.runs-on }}
     name: ${{ matrix.platform.os-name }} - ${{ matrix.platform.id }} - ${{ matrix.environment }}
     strategy:
       matrix:
