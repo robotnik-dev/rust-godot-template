@@ -20,7 +20,7 @@ jobs:
 
       - id: generate-matrix
         env:
-          TARGETS: ${{ fromJson(vars.TARGETS) }}
+          TARGETS: ${{ vars.TARGETS }}
         run: |
           JSON_CONTENT=$(cat target-matrix.json)
           TARGETS_ARRAY=$(echo "$TARGETS" | jq -c '.')
