@@ -122,7 +122,7 @@ jobs:
           GAME_NAME: ${{ vars.ITCHIO_GAMENAME }}
           PLATFORM: ${{ matrix.platform.id }}
           FILE_EXTENSION: ${{ matrix.platform.extension }}
-        run: sed -i '/^export_path/s/'$PLATFORM'.'$FILE_EXTENSION'/'"$GAME_NAME"'.'$FILE_EXTENSION'/' $GITHUB_WORKSPACE/godot/export_presets.cfg
+        run: sed -i "/^export_path/s/$PLATFORM\.$FILE_EXTENSION/$GAME_NAME\.$FILE_EXTENSION/" $GITHUB_WORKSPACE/godot/export_presets.cfg
 
       - name: Export for ${{ env.TARGET }}
         id: export
