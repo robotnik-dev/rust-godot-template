@@ -1,9 +1,6 @@
 name: CD Pipeline
 
-on:
-  push:
-    tags:
-      - "v*"
+on: workflow_dispatch
 
 jobs:
   create-release:

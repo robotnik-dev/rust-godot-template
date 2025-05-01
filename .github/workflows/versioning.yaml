@@ -11,12 +11,38 @@ jobs:
     if: github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'no tag')
     runs-on: ubuntu-latest
     permissions: write-all
+    outputs:
+      new-tag: ${{ steps.autotag.outputs.new-tag }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - uses: phish108/autotag-action@v1.1.64
+        id: autotag
         with:
           with-v: true
           github-token: ${{ secrets.PAT }}
+
+
+  deploy-itchio:
+    name: Deploy web build to itch.io
+    needs: bump-version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        id: download-artifact
+        uses: dawidd6/action-download-artifact@v9
+        with:
+          name: web
+          pr: ${{ github.event.pull_request.number }}
+
+      - name: Deploy web build
+        uses: manleydev/butler-publish-itchio-action@v1.0.3
+        env:
+          BUTLER_CREDENTIALS: ${{ secrets.BUTLER_API_KEY }}
+          CHANNEL: web
+          ITCH_GAME: ${{ vars.ITCHIO_GAMENAME }}
+          ITCH_USER: ${{ secrets.ITCHIO_USERNAME }}
+          PACKAGE: web
+          VERSION: ${{ needs.bump-version.outputs.new-tag }}
