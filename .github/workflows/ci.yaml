@@ -117,12 +117,18 @@ jobs:
           merge-multiple: true
 
       - name: Rename Executable
-        if: ${{ matrix.platform.id != 'web' || matrix.platform.id != 'android' }}
+        if: ${{ matrix.platform.id != 'web' && matrix.platform.id != 'android' }}
         env:
           GAME_NAME: ${{ vars.ITCHIO_GAMENAME }}
           PLATFORM: ${{ matrix.platform.id }}
           FILE_EXTENSION: ${{ matrix.platform.extension }}
-        run: sed -i "/^export_path/s/$PLATFORM\.$FILE_EXTENSION/$GAME_NAME\.$FILE_EXTENSION/" $GITHUB_WORKSPACE/godot/export_presets.cfg
+        run: |
+          echo "Checking export_presets.cfg before changes:"
+          grep "export_path" $GITHUB_WORKSPACE/godot/export_presets.cfg
+          echo "Attempting to replace $PLATFORM.$FILE_EXTENSION with $GAME_NAME.$FILE_EXTENSION"
+          sed -i "s|export_path=\".*$PLATFORM\.$FILE_EXTENSION\"|export_path=\"$GAME_NAME\.$FILE_EXTENSION\"|g" $GITHUB_WORKSPACE/godot/export_presets.cfg
+          echo "Checking export_presets.cfg after changes:"
+          grep "export_path" $GITHUB_WORKSPACE/godot/export_presets.cfg
 
       - name: Export for ${{ env.TARGET }}
         id: export
