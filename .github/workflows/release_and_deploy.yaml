@@ -1,4 +1,3 @@
-
 name: Release and Deploy
 
 on:
@@ -72,11 +71,9 @@ jobs:
           VERSION: ${{ needs.bump-version.outputs.new-tag }}
 
 
-  create-release:
-    name: Create Github Release for  ${{ matrix.platform.id }}
+  prepare-releases:
+    name: Prepare Release Asset for ${{ matrix.platform.id }}
     needs: [bump-version, generate-target-matrix]
-    permissions:
-      contents: write
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -89,21 +86,46 @@ jobs:
           name: ${{ matrix.platform.id }}
           workflow: ci.yaml
           pr: ${{ github.event.pull_request.number }}
-
-      - name: Create Release Directory
-        run: mkdir -v -p release
+          path: artifacts/${{ matrix.platform.id }}
 
       - name: Zip Artifacts
         uses: montudor/action-zip@v1
         with:
-          args: zip -qq -r release/${{ matrix.platform.id }}.zip ${{ matrix.platform.id }}
+          args: zip -qq -r artifacts/${{ matrix.platform.id }}.zip artifacts/${{ matrix.platform.id }}
+
+      - name: Upload artifact for release job
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: artifacts/*.zip
+          retention-days: 1
+
+
+  create-release:
+    name: Create GitHub Release
+    needs: [bump-version, prepare-releases]
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all release assets
+        uses: actions/download-artifact@v4
+        with:
+          name: release-assets
+          path: release-assets
+
+      - name: List available release assets
+        run: |
+          mkdir -p release
+          cp release-assets/*.zip release/
+          ls -la release/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ needs.bump-version.outputs.new-tag }}
           make_latest: true
-          name: Release ${{ github.ref_name }}
+          name: Release ${{ needs.bump-version.outputs.new-tag }}
           draft: false
           prerelease: false
           generate_release_notes: true
