@@ -58,7 +58,14 @@ jobs:
         uses: dawidd6/action-download-artifact@v9
         with:
           name: web
+          workflow: ci.yaml
           pr: ${{ github.event.pull_request.number }}
+      
+      - name: List Artifacts
+        run: |
+          ls
+          cd web
+          ls
 
       - name: Deploy web build
         uses: manleydev/butler-publish-itchio-action@v1.0.3
