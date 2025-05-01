@@ -6,6 +6,8 @@ Set the following repository variable and secrets
 ### vars:
 - GODOT_VERSION
 - ITCHIO_GAMENAME
+- TARGETS: list of strings ("linux" is mandatory)
+  >["linux", "windows", "mac", "web"]
 
 ### secrets:
 - PAT
