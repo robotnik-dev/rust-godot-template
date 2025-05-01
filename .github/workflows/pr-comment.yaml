@@ -31,31 +31,31 @@ jobs:
           echo "SUITE_ID=$SUITE_ID" >> "$GITHUB_ENV"
 
           ARTIFACT_ID_WIN=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
-            --jq '[.artifacts.[] |
-            select(.workflow_run.id=='${PREVIOUS_JOB_ID}') |
+            --jq "[.artifacts.[] |
+            select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
             select(.expired==false) |
-            select(.name=="windows")] |
-            .id')
+            select(.name=='windows')] |
+            .id")
 
           echo "Artifact ID_WIN: $ARTIFACT_ID_WIN"
           echo "ARTIFACT_ID_WIN=$ARTIFACT_ID_WIN" >> "$GITHUB_ENV"
 
           ARTIFACT_ID_LINUX=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
-            --jq '[.artifacts.[] |
-            select(.workflow_run.id=='${PREVIOUS_JOB_ID}') |
+            --jq "[.artifacts.[] |
+            select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
             select(.expired==false) |
-            select(.name=="linux")] |
-            .id')
+            select(.name=='linux')] |
+            .id")
 
           echo "Artifact ID_LINUX: $ARTIFACT_ID_LINUX"
           echo "ARTIFACT_ID_LINUX=$ARTIFACT_ID_LINUX" >> "$GITHUB_ENV"
 
           ARTIFACT_ID_MAC=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
-            --jq '[.artifacts.[] |
-            select(.workflow_run.id=='${PREVIOUS_JOB_ID}') |
+            --jq "[.artifacts.[] |
+            select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
             select(.expired==false) |
-            select(.name=="mac")] |
-            .id')
+            select(.name=='mac')] |
+            .id")
 
           echo "Artifact ID_MAC: $ARTIFACT_ID_MAC"
           echo "ARTIFACT_ID_MAC=$ARTIFACT_ID_MAC" >> "$GITHUB_ENV"
