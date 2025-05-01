@@ -1,5 +1,5 @@
 
-name: Version Management
+name: Release and Deploy
 
 on:
   pull_request:
