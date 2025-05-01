@@ -96,7 +96,7 @@ jobs:
       - name: Upload artifact for release job
         uses: actions/upload-artifact@v4
         with:
-          name: release-assets
+          name: release-asset-${{ matrix.platform.id }}
           path: artifacts/*.zip
           retention-days: 1
 
@@ -111,14 +111,9 @@ jobs:
       - name: Download all release assets
         uses: actions/download-artifact@v4
         with:
-          name: release-assets
-          path: release-assets
-
-      - name: List available release assets
-        run: |
-          mkdir -p release
-          cp release-assets/*.zip release/
-          ls -la release/
+          name: release-asset-*
+          path: release
+          merge-multiple: true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
