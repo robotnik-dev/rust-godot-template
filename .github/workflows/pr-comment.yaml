@@ -32,7 +32,7 @@ jobs:
 
           ARTIFACT_ID_WIN=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
             --jq '[.artifacts.[] |
-            select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
+            select(.workflow_run.id=='${PREVIOUS_JOB_ID}') |
             select(.expired==false)] |
             select(.name=="windows") |
             .id')
@@ -42,7 +42,7 @@ jobs:
 
           ARTIFACT_ID_LINUX=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
             --jq '[.artifacts.[] |
-            select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
+            select(.workflow_run.id=='${PREVIOUS_JOB_ID}') |
             select(.expired==false)] |
             select(.name=="linux") |
             .id')
@@ -52,7 +52,7 @@ jobs:
 
           ARTIFACT_ID_MAC=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
             --jq '[.artifacts.[] |
-            select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
+            select(.workflow_run.id=='${PREVIOUS_JOB_ID}') |
             select(.expired==false)] |
             select(.name=="mac") |
             .id')
