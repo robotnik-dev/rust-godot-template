@@ -34,7 +34,7 @@ jobs:
             --jq "[.artifacts.[] |
             select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
             select(.expired==false)] |
-            select(.name==windows)
+            select(.name=="windows")
             .id")
 
           echo "Artifact ID_WIN: $ARTIFACT_ID_WIN"
@@ -44,7 +44,7 @@ jobs:
             --jq "[.artifacts.[] |
             select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
             select(.expired==false)] |
-            select(.name==linux)
+            select(.name=="linux")
             .id")
 
           echo "Artifact ID_LINUX: $ARTIFACT_ID_LINUX"
@@ -54,7 +54,7 @@ jobs:
             --jq "[.artifacts.[] |
             select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
             select(.expired==false)] |
-            select(.name==mac)
+            select(.name=="mac")
             .id")
 
           echo "Artifact ID_MAC: $ARTIFACT_ID_MAC"
