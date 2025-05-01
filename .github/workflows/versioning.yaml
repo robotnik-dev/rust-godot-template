@@ -72,7 +72,7 @@ jobs:
 
 
   create-release:
-    name: Create Github Release
+    name: Create Github Release for  ${{ matrix.platform.id }}
     needs: [bump-version, generate-target-matrix]
     permissions:
       contents: write
