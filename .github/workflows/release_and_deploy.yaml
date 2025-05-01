@@ -40,7 +40,7 @@ jobs:
         run: |
           JSON_CONTENT=$(cat target-matrix.json)
           TARGETS_ARRAY=$(echo "$TARGETS" | jq -c '.')
-          FILTERED_JSON=$(echo "$JSON_CONTENT" | jq -c --argjson targets "$TARGETS_ARRAY" '[.[] | select(.id as $id | $targets | index($id) != null)]')
+          FILTERED_JSON=$(echo "$JSON_CONTENT" | jq -c --argjson targets "$TARGETS_ARRAY" '[.[] | select(.id as $id | $targets | index($id) != null and $id != "web")]')
           echo "matrix=$FILTERED_JSON" >> $GITHUB_OUTPUT
 
           # Print for debugging
@@ -60,12 +60,6 @@ jobs:
           name: web
           workflow: ci.yaml
           pr: ${{ github.event.pull_request.number }}
-      
-      - name: List Artifacts
-        run: |
-          ls
-          cd web
-          ls
 
       - name: Deploy web build
         uses: manleydev/butler-publish-itchio-action@v1.0.3
@@ -89,26 +83,23 @@ jobs:
         platform: ${{ fromJson(needs.generate-target-matrix.outputs.matrix) }}
     steps:
       - name: Download artifact
-        if: ${{ matrix.platform.id != 'web' }}
         id: download-artifact
         uses: dawidd6/action-download-artifact@v9
         with:
           name: ${{ matrix.platform.id }}
+          workflow: ci.yaml
           pr: ${{ github.event.pull_request.number }}
 
       - name: Create Release Directory
-        if: ${{ matrix.platform.id != 'web' }}
         run: mkdir -v -p release
 
       - name: Zip Artifacts
         uses: montudor/action-zip@v1
-        if: ${{ matrix.platform.id != 'web' }}
         with:
           args: zip -qq -r release/${{ matrix.platform.id }}.zip ${{ matrix.platform.id }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
-        if: ${{ matrix.platform.id != 'web' }}
         with:
           tag_name: ${{ github.ref_name }}
           make_latest: true
