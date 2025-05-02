@@ -1,4 +1,4 @@
-name: Release and Deploy
+name: Manual Release and Deploy
 # Work in progress
 on:
   workflow_dispatch:
