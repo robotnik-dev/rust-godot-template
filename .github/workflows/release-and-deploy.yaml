@@ -137,8 +137,8 @@ jobs:
         run: |
           echo "Checking export_presets.cfg before changes:"
           grep "export_path" $GITHUB_WORKSPACE/godot/export_presets.cfg
-          echo "Attempting to replace $PLATFORM.$FILE_EXTENSION with $GAME_NAME.$FILE_EXTENSION"
-          sed -i "s|export_path=\".*$PLATFORM\.$FILE_EXTENSION\"|export_path=\"$GAME_NAME\.$FILE_EXTENSION\"|g" $GITHUB_WORKSPACE/godot/export_presets.cfg
+          echo "Attempting to replace $PLATFORM$FILE_EXTENSION with $GAME_NAME$FILE_EXTENSION"
+          sed -i "s|export_path=\".*$PLATFORM$FILE_EXTENSION\"|export_path=\"$GAME_NAME$FILE_EXTENSION\"|g" $GITHUB_WORKSPACE/godot/export_presets.cfg
           echo "Checking export_presets.cfg after changes:"
           grep "export_path" $GITHUB_WORKSPACE/godot/export_presets.cfg
 
