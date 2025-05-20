@@ -202,7 +202,7 @@ jobs:
 
   prepare-releases:
     name: Prepare Release Asset for ${{ matrix.platform.id }}
-    needs: [bump-version, generate-target-matrix]
+    needs: [bump-version, generate-target-matrix, export]
     runs-on: ubuntu-latest
     strategy:
       matrix:
