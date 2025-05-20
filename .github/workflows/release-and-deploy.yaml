@@ -1,13 +1,9 @@
 name: Release and Deploy
 
-on:
-  pull_request:
-    types: [closed]
-    branches: [main]
+on: workflow_dispatch
 
 jobs:
   bump-version:
-    if: github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'no tag')
     runs-on: ubuntu-latest
     permissions: write-all
     outputs:
@@ -38,7 +34,7 @@ jobs:
         run: |
           JSON_CONTENT=$(cat target-matrix.json)
           TARGETS_ARRAY=$(echo "$TARGETS" | jq -c '.')
-          FILTERED_JSON=$(echo "$JSON_CONTENT" | jq -c --argjson targets "$TARGETS_ARRAY" '[.[] | select(.id as $id | $targets | index($id) != null and $id != "web")]')
+          FILTERED_JSON=$(echo "$JSON_CONTENT" | jq -c --argjson targets "$TARGETS_ARRAY" '[.[] | select(.id as $id | $targets | index($id) != null)]')
           echo "matrix=$FILTERED_JSON" >> $GITHUB_OUTPUT
 
           # Print for debugging
@@ -46,18 +42,131 @@ jobs:
           echo "$FILTERED_JSON" | jq '.'
 
 
+  test-and-build:
+    needs: generate-target-matrix
+    runs-on: ${{ matrix.platform.runs-on }}
+    name: ${{ matrix.platform.os-name }} - ${{ matrix.platform.id }} - ${{ matrix.environment }}
+    strategy:
+      matrix:
+        environment: [debug, release]
+        platform: ${{fromJson(needs.generate-target-matrix.outputs.matrix)}}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build ${{ matrix.environment }} binary
+        uses: houseabsolute/actions-rust-cross@v1.0.4
+        with:
+          working-directory: rust
+          # FIXME: https://github.com/cross-rs/cross/issues/1222
+          # cross-version: c7dee4d008475ce1c140773cbcd6078f4b86c2aa
+          command: ${{ matrix.platform.command }}
+          target: ${{ matrix.platform.target }}
+          args: ${{ matrix.environment == 'release' && '--locked --release' || '--locked' }} ${{ matrix.platform.args }}
+          toolchain: ${{ matrix.platform.toolchain }}
+          strip: true
+
+      - name: Upload ${{ matrix.environment }} artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-${{ matrix.environment }}-${{ matrix.platform.id }}
+          path: rust/target/${{ matrix.platform.target }}/${{ matrix.environment }}/${{ matrix.platform.output }}
+          retention-days: 1
+
+
+  export:
+    name: Export for ${{ matrix.platform.id }}
+    needs: [generate-target-matrix, test-and-build]
+    permissions: write-all
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ${{fromJson(needs.generate-target-matrix.outputs.matrix)}}
+    env:
+      TARGET: ${{ matrix.platform.id }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install wine
+        id: wine_install
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt update
+          sudo apt install -y wine64 wine32
+          echo "WINE_PATH=$(which wine)" >> $GITHUB_OUTPUT
+          echo "$GITHUB_OUTPUT"
+
+      - name: Download all release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: rust/target/release
+          pattern: rust-release-*
+          merge-multiple: true
+
+      - name: Download Debug Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: rust/target/debug
+          pattern: rust-debug-*
+          merge-multiple: true
+
+      - name: Download target release artifact
+        uses: actions/download-artifact@v4
+        if: ${{ matrix.platform.rust-lib-path != '' }}
+        with:
+          path: rust/target/${{ matrix.platform.rust-lib-path }}/release
+          pattern: rust-release-${{ matrix.platform.id }}
+          merge-multiple: true
+
+      - name: Download target debug artifact
+        uses: actions/download-artifact@v4
+        if: ${{ matrix.platform.rust-lib-path != '' }}
+        with:
+          path: rust/target/${{ matrix.platform.rust-lib-path }}/debug
+          pattern: rust-debug-${{ matrix.platform.id }}
+          merge-multiple: true
+
+      - name: Rename Executable
+        if: ${{ matrix.platform.id != 'web' && matrix.platform.id != 'android' }}
+        env:
+          GAME_NAME: ${{ vars.ITCHIO_GAMENAME }}
+          PLATFORM: ${{ matrix.platform.id }}
+          FILE_EXTENSION: ${{ matrix.platform.extension }}
+        run: sed -i "s|export_path=\".*$PLATFORM$FILE_EXTENSION\"|export_path=\"$GAME_NAME$FILE_EXTENSION\"|g" $GITHUB_WORKSPACE/godot/export_presets.cfg
+
+      - name: Export for ${{ env.TARGET }}
+        id: export
+        uses: firebelley/godot-export@v6.0.0
+        with:
+          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/${{ vars.GODOT_VERSION }}-stable/Godot_v${{ vars.GODOT_VERSION }}-stable_linux.x86_64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/${{ vars.GODOT_VERSION }}-stable/Godot_v${{ vars.GODOT_VERSION }}-stable_export_templates.tpz
+          relative_project_path: godot
+          relative_export_path: build
+          cache: true
+          verbose: true
+          presets_to_export: ${{ env.TARGET }}
+          wine_path: ${{ steps.wine_install.outputs.WINE_PATH }}
+
+      - name: Upload Development Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform.id }}
+          path: build/
+          retention-days: 1
+
+
   deploy-itchio:
     name: Deploy web build to itch.io
-    needs: bump-version
+    needs: [bump-version, export]
     runs-on: ubuntu-latest
     steps:
       - name: Download artifact
         id: download-artifact
-        uses: dawidd6/action-download-artifact@v9
+        uses: actions/download-artifact@v4
         with:
           name: web
-          workflow: ci.yaml
-          pr: ${{ github.event.pull_request.number }}
 
       - name: Deploy web build
         uses: manleydev/butler-publish-itchio-action@v1.0.3
@@ -95,11 +204,9 @@ jobs:
     steps:
       - name: Download artifact
         id: download-artifact
-        uses: dawidd6/action-download-artifact@v9
+        uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.platform.id }}
-          workflow: ci.yaml
-          pr: ${{ github.event.pull_request.number }}
           path: artifacts/${{ matrix.platform.id }}
 
       - name: Zip Artifacts
